@@ -13,7 +13,7 @@ import {
     PartialGuildMember,
     AuditLogEvent,
     GuildAuditLogsEntry,
-    GuildAuditLogsActionType, GuildAuditLogsTargetType
+    GuildAuditLogsActionType, GuildAuditLogsTargetType, Message
 } from "discord.js";
 import {Server} from "./server";
 import axios from "axios";
@@ -51,6 +51,10 @@ export class ServerClient extends Client {
     private registerEvents() {
         this.on(Events.ClientReady, async () => {
             await this.ready();
+        });
+
+        this.on(Events.MessageCreate, async (message) => {
+            await this.message(message);
         });
 
         this.on(Events.InteractionCreate, async (interaction) => {
@@ -307,11 +311,19 @@ export class ServerClient extends Client {
                     const year = interaction.fields.getTextInputValue("academicYear");
                     const other = interaction.fields.getTextInputValue("otherInfo");
                     const player = await PuggApi.fetchLftPlayer(member.id);
+                    const content = `Output {
+                            **Username**: ${username}
+                            **Experience**: ${experience}
+                            **Hours Available**: ${hours}
+                            **Roles**: ${roles}
+                            **Year**: ${year}
+                            **Other Info**: ${other}
+                        }`
 
                     if (!player) {
                         const player = new LftPlayer(member.id, 0, username, experience, hours, roles, year, other);
                         await PuggApi.createLftPlayer(player);
-                        await interaction.reply({ content: 'Success', ephemeral: true });
+                        await interaction.reply({ content: content, ephemeral: true });
                     }
                     else {
                         player.name = username;
@@ -321,7 +333,7 @@ export class ServerClient extends Client {
                         player.year = year;
                         player.other = other;
                         await PuggApi.updateLftPlayer(player);
-                        await interaction.reply({ content: "Success", ephemeral: true });
+                        await interaction.reply({ content: content, ephemeral: true });
                     }
                     return;
                 }
@@ -334,11 +346,19 @@ export class ServerClient extends Client {
                     const year = interaction.fields.getTextInputValue("academicYear");
                     const other = interaction.fields.getTextInputValue("otherInfo");
                     const team = await PuggApi.fetchLfpTeam(teamName);
+                    const content = `Output {
+                            **Team Name**: ${teamName}
+                            **Experience**: ${experience}
+                            **Hours Available**: ${hours}
+                            **Roles**: ${roles}
+                            **Year**: ${year}
+                            **Other Info**: ${other}
+                        }`
 
                     if (!team) {
                         const team = new LfpTeam(member.id, 0, teamName, experience, hours, roles, year, other);
                         await PuggApi.createLfpTeam(team);
-                        await interaction.reply({ content: 'Success', ephemeral: true });
+                        await interaction.reply({ content: content, ephemeral: true });
                     } else {
                         if (team.ownerId != member.id) {
                             await interaction.reply({ content: "Sorry, a team with this name already exists.", ephemeral: true });
@@ -349,7 +369,7 @@ export class ServerClient extends Client {
                             team.year = year;
                             team.other = other;
                             await PuggApi.updateLfpTeam(team);
-                            await interaction.reply({ content: "Success", ephemeral: true });
+                            await interaction.reply({ content: content, ephemeral: true });
                         }
                     }
                     return;
@@ -406,6 +426,18 @@ export class ServerClient extends Client {
                     const message = await interaction.channel.send({ content: `<@${interaction.user.id}> an error occurred and has been logged.` });
                     setTimeout((message) => message.delete(), 5000, message);
                 }
+            }
+        }
+    }
+
+    private async message(message: Message) {
+        if (message.channelId == "1143326543351910470") {
+            if (!message.author.bot) {
+                try {
+                    setTimeout(() => {
+                        message.delete();
+                    }, 1000);
+                } catch {  }
             }
         }
     }
