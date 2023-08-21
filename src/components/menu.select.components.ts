@@ -5,7 +5,7 @@ export class MenuSelectComponents extends ActionRowBuilder<StringSelectMenuBuild
     constructor(menus: Menu[]) {
         super();
         const selectMenu = new StringSelectMenuBuilder()
-                .setCustomId("menu-setup")
+                .setCustomId("setup")
                 .setPlaceholder("Select a menu")
                 .setMaxValues(1);
 

@@ -33,6 +33,7 @@ import {BanEmbed} from "./embeds/ban.embed";
 import {PuggApi} from "./services/pugg.api";
 import {LftPlayer} from "./lft.player";
 import {LfpTeam} from "./lfp.team";
+import {MenuSetupComponents} from "./components/menu.setup.components";
 
 export class ServerClient extends Client {
     public server: Server;
@@ -94,6 +95,7 @@ export class ServerClient extends Client {
     private async interaction(interaction: Interaction) {
         try {
             const member = interaction.member;
+            const channel = interaction.channel;
             const guild = interaction.guild;
 
             if (!(member instanceof GuildMember)) {
@@ -101,7 +103,11 @@ export class ServerClient extends Client {
             }
 
             if (!guild) {
-                return;
+                throw new NotFoundError(`Guild Not Found`);
+            }
+
+            if (!channel) {
+                throw new NotFoundError(`Channel Not Found`);
             }
 
             if (interaction.isButton()) {
@@ -204,6 +210,15 @@ export class ServerClient extends Client {
                         }
                         return;
                     }
+                }
+                else if (args[0] == "setup") {
+                    const menuName = interaction.values[0];
+                    const menu = await Menu.fetch(menuName, guild.id);
+                    if (!menu) throw new NotFoundError(`Menu Not Found\nMenuName: ${menuName}`)
+                    const components = MenuSetupComponents.load(menu);
+                    await interaction.reply({ content: "Success!", ephemeral: true });
+                    await interaction.channel.send({ components: components });
+                    return;
                 }
                 else {
                     const roleId = interaction.values[0];
