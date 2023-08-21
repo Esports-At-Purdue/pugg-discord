@@ -151,8 +151,6 @@ export class ServerClient extends Client {
                         return;
                     }
                 }
-
-                throw new NotFoundError(`Button Not Found\nCustomId: ${customId}`);
             }
 
             if (interaction.isStringSelectMenu()) {
@@ -277,8 +275,11 @@ export class ServerClient extends Client {
                         await Verifier.registerNewStudent(member, email, interaction);
                         await interaction.followUp({content: `A Verification Email has been sent to \`${email}\`.`, ephemeral: true});
                     } catch (error) {
-                        await this.error(error as Error, "Registration Failed");
-                        await interaction.followUp({content: `Sorry, the address you provided, \`${email}\`, is invalid. Please provide a valid Purdue address.`, ephemeral: true});
+                        if (error instanceof InvalidAddressError) {
+                            await interaction.followUp({content: `Sorry, the address you provided, \`${email}\`, is invalid. Please provide a valid Purdue address.`, ephemeral: true});
+                        } else {
+                            await this.error(error as Error, "Registration Failed");
+                        }
                     }
                     return;
                 }
