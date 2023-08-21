@@ -146,6 +146,9 @@ export class ServerClient extends Client {
                             }
                             return;
                         }
+                    } else {
+                        await interaction.reply({ content: "Sorry, this is a legacy role and cannot be applied.", ephemeral: true });
+                        return;
                     }
                 }
 
