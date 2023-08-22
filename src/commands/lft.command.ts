@@ -12,4 +12,4 @@ async function execute(interaction: ChatInputCommandInteraction) {
     return;
 }
 
-export const LftCommand = new Command("lft", ServerName.CSGO, builder, execute);
+export const LftCommand = new Command("lft", ServerName.CSGO, false, builder, execute);

@@ -3,6 +3,7 @@ import {ChatInputCommandInteraction, Guild, SlashCommandBuilder} from "discord.j
 import {Menu} from "../menu";
 import {MenuEditComponents} from "../components/menu.edit.components";
 import {NotFoundError} from "../error";
+import {MenuSetupComponents} from "../components/menu.setup.components";
 
 enum Subcommand {
     Create = "create",
@@ -52,49 +53,39 @@ async function execute(interaction: ChatInputCommandInteraction) {
 
     if (subcommandName == Subcommand.Create) {
         const menuName = interaction.options.getString("name") as string;
-        try {
-            await Menu.fetch(menuName, guild.id);
+        const menu = await Menu.fetch(menuName, guild.id);
+        if (menu) {
             await interaction.reply({ content: `Menu with name \`${menuName}\` already exists.`, ephemeral: true });
-            return;
-        } catch {
-            const menu = await Menu.create(menuName, guild.id).save();
-            const content = "When you are finished editing, dismiss this message.";
-            const menuComponents = MenuEditComponents.load(menu);
-            await interaction.reply({ content: content, components: menuComponents, ephemeral: true });
-            return;
+        } else {
+            const menu = await new Menu(menuName, guild.id).save();
+            const components = MenuEditComponents.instance(menu);
+            await interaction.reply({ components: components });
         }
+        return;
     }
 
     if (subcommandName == Subcommand.Edit) {
         const menuName = interaction.options.getString("name") as string;
-        try {
-            const menu = await Menu.fetch(menuName, guild.id);
-            if (!menu) throw new NotFoundError("Menu Not Found");
-            const content = "When you are finished editing, dismiss this message.";
-            const menuComponents = MenuEditComponents.load(menu);
-            await interaction.reply({ content: content, components: menuComponents, ephemeral: true });
-            return;
-        } catch {
+        const menu = await Menu.fetch(menuName, guild.id);
+        if (!menu) {
             await interaction.reply({ content: `Menu with name \`${menuName}\` does not exist.`, ephemeral: true });
-            return;
+        } else {
+            const components = MenuEditComponents.instance(menu);
+            await interaction.reply({ components: components });
         }
+        return;
     }
 
     if (subcommandName == Subcommand.Delete) {
         const menuName = interaction.options.getString("name") as string;
-        try {
-            const menu = await Menu.fetch(menuName, guild.id);
-            if (!menu) throw new NotFoundError("Menu Not Found")
+        const menu = await Menu.fetch(menuName, guild.id);
+        if (!menu) {
+            await interaction.reply({ content: `Menu with name \`${menuName}\` does not exist.`,  ephemeral: true });
+        } else {
             await menu.delete();
-            await interaction.reply({content: "Success", ephemeral: true});
-        } catch (error) {
-            console.log(error);
-            await interaction.reply({
-                content: `Menu with name \`${menuName}\` does not exist.`,
-                ephemeral: true
-            });
-            return;
+            await interaction.reply({ content: "Success", ephemeral: true });
         }
+        return;
     }
 
     if (subcommandName == Subcommand.List) {
@@ -111,4 +102,4 @@ async function execute(interaction: ChatInputCommandInteraction) {
 
 }
 
-export const MenuCommand = new Command("menu", ServerName.Global, builder, execute);
+export const MenuCommand = new Command("menu", ServerName.Global, true, builder, execute);

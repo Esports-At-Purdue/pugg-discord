@@ -1,22 +1,19 @@
-import {ButtonStyle, Role} from "discord.js";
+import {APIActionRowComponent, APIActionRowComponentTypes, APIEmbed} from "discord.js";
 import {PuggApi} from "./services/pugg.api";
 
 export class Menu {
     public name:    string;
     public guildId: string;
-    public buttons: MenuButton[][];
+    public content: string;
+    public embeds: APIEmbed[];
+    public components: APIActionRowComponent<APIActionRowComponentTypes>[];
 
-    constructor(name: string, guildId: string, rows: MenuButton[][]) {
+    constructor(name: string, guildId: string, content: string = "", embeds: APIEmbed[] = [  ], components: APIActionRowComponent<APIActionRowComponentTypes>[] = [  ]) {
         this.name = name;
         this.guildId = guildId;
-        this.buttons = rows;
-    }
-
-    public static create(name: string, guildId: string) {
-        const buttons = [
-            [  ], [  ], [  ], [  ], [  ]
-        ] as MenuButton[][];
-        return new Menu(name, guildId, buttons);
+        this.content = content;
+        this.embeds = embeds;
+        this.components = components;
     }
 
     public static async fetch(name: string, guildId: string) {
@@ -34,23 +31,5 @@ export class Menu {
 
     public async delete() {
         await PuggApi.deleteMenu(this);
-    }
-}
-
-export class MenuButton {
-    public id: string;
-    public style: ButtonStyle;
-    public label: string | undefined;
-    public emoji: string | undefined;
-
-    constructor(id: string, style: ButtonStyle, label: string | undefined, emoji: string | undefined) {
-        this.id = id;
-        this.style = style;
-        this.label = label;
-        this.emoji = emoji;
-    }
-
-    public static create(role: Role) {
-        return new MenuButton(role.id, ButtonStyle.Secondary, role.name, undefined);
     }
 }

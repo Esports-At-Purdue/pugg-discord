@@ -8,12 +8,12 @@ export class CommandManager {
     public static cache = new Collection<CommandName, Command>;
 
     public static async load() {
-        const commands = [ MenuCommand, SetupCommand, LftCommand, LfpCommand ];
+        const commands = [ MenuCommand, SetupCommand, LftCommand, LfpCommand, TestCommand ];
         commands.forEach(command => CommandManager.cache.set(command.name, command));
     }
 
     public static async loadServerCommands(client: ServerClient) {
-        const commands = [ MenuCommand, SetupCommand, LftCommand, LfpCommand ]
+        const commands = CommandManager.cache
             .filter(command => {
                 if (command.server == client.server.name) return true;
                 if (command.server == ServerName.Global) return true;
@@ -37,12 +37,14 @@ export class CommandManager {
 export class Command {
     public name: CommandName;
     public server: ServerName;
+    public restricted: boolean;
     public builder: SlashCommandBuilder;
     public execute: Function;
 
-    constructor(name: CommandName, server: ServerName, builder: any, execute: Function) {
+    constructor(name: CommandName, server: ServerName, restricted: boolean, builder: any, execute: Function) {
         this.name = name;
         this.server = server;
+        this.restricted = restricted;
         this.builder = builder;
         this.execute = execute;
     }
@@ -60,3 +62,4 @@ import {MenuCommand} from "./commands/menu.command";
 import {SetupCommand} from "./commands/setup.command";
 import {LftCommand} from "./commands/lft.command";
 import {LfpCommand} from "./commands/lfp.command";
+import {TestCommand} from "./commands/test";

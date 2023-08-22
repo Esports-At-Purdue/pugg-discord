@@ -20,4 +20,4 @@ async function execute(interaction: ChatInputCommandInteraction) {
     await interaction.reply({ components: [ new MenuSelectComponents(menus) ], ephemeral: true });
 }
 
-export const SetupCommand = new Command("setup", ServerName.Global, builder, execute);
+export const SetupCommand = new Command("setup", ServerName.Global, true, builder, execute);

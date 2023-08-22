@@ -29,10 +29,12 @@ class ServerSettings {
 class RoleSettings {
     public member: string;
     public purdue: string;
+    public admins: string[];
 
-    constructor(member: string, purdue: string) {
+    constructor(member: string, purdue: string, admins: string[]) {
         this.member = member;
         this.purdue = purdue;
+        this.admins = admins;
     }
 }
 

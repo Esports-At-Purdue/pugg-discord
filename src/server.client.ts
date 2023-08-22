@@ -8,21 +8,19 @@ import {
     GuildMember,
     RoleSelectMenuBuilder,
     ActionRowBuilder,
-    Role,
     TextChannel,
     PartialGuildMember,
     AuditLogEvent,
     GuildAuditLogsEntry,
-    GuildAuditLogsActionType, GuildAuditLogsTargetType, Message
+    Message
 } from "discord.js";
 import {Server} from "./server";
 import axios from "axios";
 import {InvalidAddressError, NotFoundError} from "./error";
 import {ButtonEditComponent} from "./components/button.edit.component";
-import {Menu, MenuButton} from "./menu";
+import {Menu} from "./menu";
 import {ButtonStyleComponent} from "./components/button.style.component";
 import {ButtonLabelModal} from "./modals/button.label.modal";
-import {MenuEditComponents} from "./components/menu.edit.components";
 import {CommandManager} from "./command";
 import {Student} from "./student";
 import {PurdueModal} from "./modals/purdue.modal";
@@ -79,13 +77,16 @@ export class ServerClient extends Client {
             await CommandManager.loadServerCommands(this);
             const guild = await this.guilds.fetch(this.server.id);
             const logChannel = await guild.channels.fetch(this.server.settings.channels.log) as TextChannel;
+            /*
             await logChannel.send({
+
                 embeds: [
                     new EmbedBuilder()
                         .setTitle("Client Loaded")
                         .setColor(Colors.Green)
                 ]
-            })
+            });
+                      */
         } catch (error: any) {
             await this.error(error as Error, "Loading Failed");
             setTimeout(this.load, 5 * 60 * 1000);
@@ -119,48 +120,80 @@ export class ServerClient extends Client {
                 const args = customId.split("-");
 
                 if (args[0] == "menu") {
-                    const buttonEditComponent = new ButtonEditComponent(customId);
-                    await interaction.reply({ components: [ buttonEditComponent ], ephemeral: true  });
+                    if (args[1] == "add") {
+                        if (args[2] == "content") {
+                            const modal = new MenuContentModal();
+                            await interaction.showModal(modal);
+                        }
+                        if (args[2] == "embed") {
+
+                        }
+                        if (args[2] == "component") {
+
+                        }
+                    }
+                    if (args[1] == "edit") {
+                        if (args[2] == "content") {
+
+                        }
+                        if (args[2] == "embed") {
+
+                        }
+                        if (args[2] == "component") {
+
+                        }
+                    }
+                    if(args[1] == "delete") {
+                        if (args[2] == "content") {
+
+                        }
+                        if (args[2] == "embed") {
+
+                        }
+                        if (args[2] == "component") {
+
+                        }
+                    }
                     return;
                 }
-                else {
-                    const role = await interaction.guild.roles.fetch(customId);
-                    const member = interaction.member as GuildMember;
-                    if (role) {
-                        if (member.roles.cache.has(role.id)) {
-                            if (role.id == this.server.settings.roles.member) await interaction.reply({ content: "You already have this role!", ephemeral: true });
-                            else if (role.id == this.server.settings.roles.purdue) await interaction.reply({ content: "You are verified!", ephemeral: true });
-                            else {
-                                await member.roles.remove(role.id);
-                                await interaction.reply({ content: `You removed **<@&${role.id}>**.`, ephemeral: true });
-                            }
-                            return;
-                        } else {
-                            if (role.id == this.server.settings.roles.member) {
-                                await member.roles.add(role.id);
-                                await interaction.reply({content: "Thank you, and welcome to the Server!", ephemeral: true});
-                            }
-                            else if (role.id == this.server.settings.roles.purdue) {
-                                const student = await Student.fetch(member.id);
-                                if (student?.verified) {
-                                    await member.roles.add(role.id);
-                                    await interaction.reply({content: `You are verified. Thank you!`, ephemeral: true});
-                                } else {
-                                    const modal = new PurdueModal();
-                                    await interaction.showModal(modal);
-                                }
-                            }
-                            else {
-                                await member.roles.add(role.id);
-                                await interaction.reply({ content: `You applied **<@&${role.id}>**.`, ephemeral: true });
-                            }
-                            return;
+
+                const role = await interaction.guild.roles.fetch(customId);
+                const member = interaction.member as GuildMember;
+                if (role) {
+                    if (member.roles.cache.has(role.id)) {
+                        if (role.id == this.server.settings.roles.member) await interaction.reply({ content: "You already have this role!", ephemeral: true });
+                        else if (role.id == this.server.settings.roles.purdue) await interaction.reply({ content: "You are verified!", ephemeral: true });
+                        else {
+                            await member.roles.remove(role.id);
+                            await interaction.reply({ content: `You removed **<@&${role.id}>**.`, ephemeral: true });
                         }
+                        return;
                     } else {
-                        await interaction.reply({ content: "Sorry, this is a legacy role and cannot be applied.", ephemeral: true });
+                        if (role.id == this.server.settings.roles.member) {
+                            await member.roles.add(role.id);
+                            await interaction.reply({content: "Thank you, and welcome to the Server!", ephemeral: true});
+                        }
+                        else if (role.id == this.server.settings.roles.purdue) {
+                            const student = await Student.fetch(member.id);
+                            if (student?.verified) {
+                                await member.roles.add(role.id);
+                                await interaction.reply({content: `You are verified. Thank you!`, ephemeral: true});
+                            } else {
+                                const modal = new PurdueModal();
+                                await interaction.showModal(modal);
+                            }
+                        }
+                        else {
+                            await member.roles.add(role.id);
+                            await interaction.reply({ content: `You applied **<@&${role.id}>**.`, ephemeral: true });
+                        }
                         return;
                     }
+                } else {
+                    await interaction.reply({ content: "Sorry, this is a legacy role and cannot be applied.", ephemeral: true });
+                    return;
                 }
+
             }
 
             if (interaction.isStringSelectMenu()) {
@@ -219,9 +252,9 @@ export class ServerClient extends Client {
                     const menuName = interaction.values[0];
                     const menu = await Menu.fetch(menuName, guild.id);
                     if (!menu) throw new NotFoundError(`Menu Not Found\nMenuName: ${menuName}`)
-                    const components = MenuSetupComponents.load(menu);
+                    const components = new MenuSetupComponents()
                     await interaction.reply({ content: "Success!", ephemeral: true });
-                    await interaction.channel.send({ components: components });
+                    //await interaction.channel.send({ components: components });
                     return;
                 }
                 else {
@@ -407,7 +440,17 @@ export class ServerClient extends Client {
             if (interaction.isChatInputCommand()) {
                 const commandName = interaction.commandName;
                 const command = CommandManager.fetchCommand(commandName);
-                await command.execute(interaction);
+                if (command.restricted) {
+                    const roles = member.roles.cache;
+                    const adminRoles = this.server.settings.roles.admins;
+                    if (roles.some(role => adminRoles.some(adminRole => role.id == adminRole))) {
+                        await command.execute(interaction);
+                    } else {
+                        await interaction.reply({ content: "You don't have permission to use this command.", ephemeral: true });
+                    }
+                } else {
+                    await command.execute(interaction);
+                }
                 return;
             }
         } catch (error: any) {
