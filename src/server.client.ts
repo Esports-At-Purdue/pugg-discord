@@ -1,26 +1,21 @@
 import {
+    AuditLogEvent,
     Client,
     ClientOptions,
     Colors,
-    Events,
     EmbedBuilder,
-    Interaction,
-    GuildMember,
-    RoleSelectMenuBuilder,
-    ActionRowBuilder,
-    TextChannel,
-    PartialGuildMember,
-    AuditLogEvent,
+    Events,
     GuildAuditLogsEntry,
-    Message
+    GuildMember,
+    Interaction,
+    Message,
+    PartialGuildMember,
+    TextChannel
 } from "discord.js";
 import {Server} from "./server";
 import axios from "axios";
 import {InvalidAddressError, NotFoundError} from "./error";
-import {ButtonEditComponent} from "./components/button.edit.component";
 import {Menu} from "./menu";
-import {ButtonStyleComponent} from "./components/button.style.component";
-import {ButtonLabelModal} from "./modals/button.label.modal";
 import {CommandManager} from "./command";
 import {Student} from "./student";
 import {PurdueModal} from "./modals/purdue.modal";
@@ -32,6 +27,8 @@ import {PuggApi} from "./services/pugg.api";
 import {LftPlayer} from "./lft.player";
 import {LfpTeam} from "./lfp.team";
 import {MenuSetupComponents} from "./components/menu.setup.components";
+import {MenuContentModal} from "./modals/menu/menu.content.model";
+import {MenuEmbedModal} from "./modals/menu/menu.embed.modal";
 
 export class ServerClient extends Client {
     public server: Server;
@@ -120,16 +117,13 @@ export class ServerClient extends Client {
                 const args = customId.split("-");
 
                 if (args[0] == "menu") {
+                    const menuName = args[3];
+                    const menu = await Menu.fetch(menuName, guild.id);
+                    if (!menu) throw new NotFoundError(`Menu Not Found\nName: ${menuName}`)
                     if (args[1] == "add") {
-                        if (args[2] == "content") {
-                            const modal = new MenuContentModal();
-                            await interaction.showModal(modal);
-                        }
-                        if (args[2] == "embed") {
-
-                        }
+                        if (args[2] == "content") await interaction.showModal(new MenuContentModal(args[3]));
+                        if (args[2] == "embed") await interaction.showModal(new MenuEmbedModal(args[3]));
                         if (args[2] == "component") {
-
                         }
                     }
                     if (args[1] == "edit") {
@@ -145,13 +139,16 @@ export class ServerClient extends Client {
                     }
                     if(args[1] == "delete") {
                         if (args[2] == "content") {
-
+                            menu.content = "";
+                            await menu.save();
+                            await interaction.reply({ content: "Content deleted.", ephemeral: true });
                         }
                         if (args[2] == "embed") {
-
+                            const index = Number.parseInt(args[4]);
+                            
                         }
                         if (args[2] == "component") {
-
+                            const index = Number.parseInt(args[4]);
                         }
                     }
                     return;
@@ -201,52 +198,7 @@ export class ServerClient extends Client {
                 const args = customId.split("-");
 
                 if (args[0] == "menu") {
-                    const menuName = args[1];
-                    const row = args[2];
-                    const column = args[3];
-                    const selectName = args[4];
-                    const property = interaction.values[0];
-                    const menu = await Menu.fetch(menuName, guild.id);
-                    if (selectName == "button") {
-                        if (property == "id") {
-                            const roleSelectMenu = new RoleSelectMenuBuilder()
-                                .setCustomId(customId)
-                                .setPlaceholder("Select a Role")
-                                .setMaxValues(1);
-                            const actionRow = new ActionRowBuilder<RoleSelectMenuBuilder>().addComponents(roleSelectMenu);
-                            await interaction.update({components: [actionRow]});
-                        }
-                        if (property == "style") {
-                            const buttonStyleComponent = new ButtonStyleComponent(customId);
-                            await interaction.update({components: [buttonStyleComponent]});
-                        }
-                        if (property == "label") {
-                            const buttonLabelModal = new ButtonLabelModal(customId);
-                            await interaction.showModal(buttonLabelModal);
-                        }
-                        if (property == "emoji") {
 
-                        }
-                        return;
-                    }
-                    if (selectName == "buttonId") {
-                        return;
-                    }
-                    if (selectName == "buttonStyle") {
-                        if (property == "primary") {
-
-                        }
-                        if (property == "secondary") {
-
-                        }
-                        if (property == "success") {
-
-                        }
-                        if (property == "success") {
-
-                        }
-                        return;
-                    }
                 }
                 else if (args[0] == "setup") {
                     const menuName = interaction.values[0];
@@ -409,29 +361,48 @@ export class ServerClient extends Client {
                 }
 
                 if (args[0] == "menu") {
-                    const menuName = args[1];
-                    const row = Number.parseInt(args[2]);
-                    const column = Number.parseInt(args[3]);
-                    const modalName = args[5];
+                    const menuName = args[3];
                     const menu = await Menu.fetch(menuName, guild.id);
+                    if (!menu) throw new NotFoundError("Menu Not Found")
+                    if (args[1] == "add") {
+                        if (args[2] == "content") {
+                            menu.content = interaction.fields.getTextInputValue("content");
+                            await menu.save();
+                            await interaction.reply({ content: "Content successfully set.", ephemeral: true });
+                        }
+                        if (args[2] == "embed") {
+                            const embed = new EmbedBuilder();
+                            try {
+                                const title = interaction.fields.getTextInputValue("title");
+                                embed.setTitle(title);
+                                try {
+                                    const description = interaction.fields.getTextInputValue("description");
+                                    embed.setDescription(description);
+                                } catch {  }
+                            } catch {
+                                try {
+                                    const description = interaction.fields.getTextInputValue("description");
+                                    embed.setDescription(description);
 
-                    /*
-                    if (modalName == "buttonLabel") {
-                        const label = interaction.fields.getTextInputValue("label");
-                        const button = menu.buttons[row][column];
-                        if (!button) throw new NotFoundError("Button Not Found");
-                        button.label = label;
-                        menu.buttons[row][column] = button;
-                        await menu.save();
-                        await interaction.deferUpdate();
-                        const reference = await interaction.message?.fetchReference();
-                        const menuReference = await reference?.fetchReference();
-                        const menuComponents = MenuEditComponents.load(menu);
-                        menuReference?.edit({ components: menuComponents });
-                        return;
+                                } catch {
+                                    await interaction.reply({ content: "At least one of title or description must be non-null", ephemeral: true });
+                                    return;
+                                }
+                            }
+                            menu.embeds.push(embed.toJSON());
+                            await menu.save();
+                            await interaction.reply({ content: "Embed successfully added.", ephemeral: true });
+                        }
                     }
-                     */
+                    if (args[1] == "edit") {
+                        if (args[2] == "content") {
 
+                        }
+                        if (args[2] == "embed") {
+
+                        }
+                    }
+                    return;
                 }
 
                 throw new NotFoundError(`ModalSubmit Not Found\nCustomId: ${customId}`);

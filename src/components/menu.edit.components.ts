@@ -13,7 +13,7 @@ export class MenuEditComponents {
         if (menu.content.length < 1) {
             actionRowA.addComponents(
                 new ButtonBuilder()
-                    .setCustomId("menu-edit-content")
+                    .setCustomId(`menu-add-content-${menu.name}`)
                     .setStyle(ButtonStyle.Success)
                     .setLabel("Add Content")
             );
@@ -21,11 +21,11 @@ export class MenuEditComponents {
         else {
             actionRowA.addComponents(
                 new ButtonBuilder()
-                    .setCustomId("menu-edit-content")
+                    .setCustomId(`menu-edit-content-${menu.name}`)
                     .setStyle(ButtonStyle.Secondary)
                     .setLabel("Add Content"),
                 new ButtonBuilder()
-                    .setCustomId("menu-delete-content")
+                    .setCustomId(`menu-delete-content-${menu.name}`)
                     .setStyle(ButtonStyle.Danger)
                     .setLabel("Delete Content")
             );
@@ -34,7 +34,7 @@ export class MenuEditComponents {
         if (menu.embeds.length < 1) {
             actionRowB.addComponents(
                 new ButtonBuilder()
-                    .setCustomId("menu-add-embed")
+                    .setCustomId(`menu-add-embed-${menu.name}`)
                     .setStyle(ButtonStyle.Success)
                     .setLabel("Add Embed")
             )
@@ -42,15 +42,15 @@ export class MenuEditComponents {
         else if (menu.embeds.length > 5) {
             actionRowB.addComponents(
                 new ButtonBuilder()
-                    .setCustomId("menu-add-embed")
+                    .setCustomId(`menu-add-embed-${menu.name}`)
                     .setStyle(ButtonStyle.Success)
                     .setLabel("Add Embed"),
                 new ButtonBuilder()
-                    .setCustomId("menu-edit-embed")
+                    .setCustomId(`menu-edit-embed-${menu.name}`)
                     .setStyle(ButtonStyle.Secondary)
                     .setLabel("Edit Embed"),
                 new ButtonBuilder()
-                    .setCustomId("menu-delete-embed")
+                    .setCustomId(`menu-delete-embed-${menu.name}`)
                     .setStyle(ButtonStyle.Danger)
                     .setLabel("Delete Embed")
             )
@@ -58,11 +58,11 @@ export class MenuEditComponents {
         else {
             actionRowB.addComponents(
                 new ButtonBuilder()
-                    .setCustomId("menu-edit-embed")
+                    .setCustomId(`menu-edit-embed-${menu.name}`)
                     .setStyle(ButtonStyle.Secondary)
                     .setLabel("Edit Embed"),
                 new ButtonBuilder()
-                    .setCustomId("menu-delete-embed")
+                    .setCustomId(`menu-delete-embed-${menu.name}`)
                     .setStyle(ButtonStyle.Danger)
                     .setLabel("Delete Embed")
             )
@@ -71,7 +71,7 @@ export class MenuEditComponents {
         if (menu.components.length < 1) {
             actionRowC.addComponents(
                 new ButtonBuilder()
-                    .setCustomId("menu-add-row")
+                    .setCustomId(`menu-add-component-${menu.name}`)
                     .setStyle(ButtonStyle.Success)
                     .setLabel("Add Row")
             )
@@ -79,15 +79,15 @@ export class MenuEditComponents {
         else if (menu.components.length > 5) {
             actionRowC.addComponents(
                 new ButtonBuilder()
-                    .setCustomId("menu-add-row")
+                    .setCustomId(`menu-add-component-${menu.name}`)
                     .setStyle(ButtonStyle.Success)
                     .setLabel("Add Row"),
                 new ButtonBuilder()
-                    .setCustomId("menu-edit-row")
+                    .setCustomId(`menu-edit-component-${menu.name}`)
                     .setStyle(ButtonStyle.Secondary)
                     .setLabel("Edit Row"),
                 new ButtonBuilder()
-                    .setCustomId("menu-delete-row")
+                    .setCustomId(`menu-delete-component-${menu.name}`)
                     .setStyle(ButtonStyle.Danger)
                     .setLabel("Delete Row")
             )
@@ -95,11 +95,11 @@ export class MenuEditComponents {
         else {
             actionRowC.addComponents(
                 new ButtonBuilder()
-                    .setCustomId("menu-edit-row")
+                    .setCustomId(`menu-edit-component-${menu.name}`)
                     .setStyle(ButtonStyle.Secondary)
                     .setLabel("Edit Row"),
                 new ButtonBuilder()
-                    .setCustomId("menu-delete-row")
+                    .setCustomId(`menu-delete-component-${menu.name}`)
                     .setStyle(ButtonStyle.Danger)
                     .setLabel("Delete Row")
             )

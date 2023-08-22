@@ -28,8 +28,8 @@ export class PuggApi {
     public static async fetchMenu(name: string, guildId: string) {
         try {
             const request = await axios.get(`${backendUrl}/menus/${guildId}/${name}`);
-            const { buttons } = request.data;
-            return new Menu(name, guildId, buttons);
+            const { content, embeds, components } = request.data;
+            return new Menu(name, guildId, content, embeds, components);
         } catch {  }
     }
 

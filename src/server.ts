@@ -1,4 +1,5 @@
 import {APIEmoji} from "discord.js";
+import {PuggApi} from "./services/pugg.api";
 
 export class Server {
     public id:       string;
@@ -9,6 +10,10 @@ export class Server {
         this.id = id;
         this.name = name;
         this.settings = settings;
+    }
+
+    public static async fetch(serverId: string) {
+        return await PuggApi.fetchServer(serverId);
     }
 }
 

@@ -59,7 +59,7 @@ async function execute(interaction: ChatInputCommandInteraction) {
         } else {
             const menu = await new Menu(menuName, guild.id).save();
             const components = MenuEditComponents.instance(menu);
-            await interaction.reply({ components: components });
+            await interaction.reply({ components: components, ephemeral: true });
         }
         return;
     }
@@ -71,7 +71,7 @@ async function execute(interaction: ChatInputCommandInteraction) {
             await interaction.reply({ content: `Menu with name \`${menuName}\` does not exist.`, ephemeral: true });
         } else {
             const components = MenuEditComponents.instance(menu);
-            await interaction.reply({ components: components });
+            await interaction.reply({ components: components, ephemeral: true });
         }
         return;
     }
