@@ -1,4 +1,4 @@
-import {APIActionRowComponent, APIActionRowComponentTypes, APIEmbed} from "discord.js";
+import {APIActionRowComponent, APIEmbed} from "discord.js";
 import {PuggApi} from "./services/pugg.api";
 
 export class Menu {
@@ -6,9 +6,9 @@ export class Menu {
     public guildId: string;
     public content: string;
     public embeds: APIEmbed[];
-    public components: APIActionRowComponent<APIActionRowComponentTypes>[];
+    public components: APIActionRowComponent<any>[];
 
-    constructor(name: string, guildId: string, content: string = "", embeds: APIEmbed[] = [  ], components: APIActionRowComponent<APIActionRowComponentTypes>[] = [  ]) {
+    constructor(name: string, guildId: string, content: string = "", embeds: APIEmbed[] = [  ], components: APIActionRowComponent<any>[] = [  ]) {
         this.name = name;
         this.guildId = guildId;
         this.content = content;

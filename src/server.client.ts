@@ -1,15 +1,16 @@
 import {
-    AuditLogEvent,
+    ActionRowBuilder,
+    AuditLogEvent, ButtonBuilder,
     Client,
     ClientOptions,
     Colors,
     EmbedBuilder,
     Events,
     GuildAuditLogsEntry,
-    GuildMember,
+    GuildMember, HexColorString,
     Interaction,
     Message,
-    PartialGuildMember,
+    PartialGuildMember, StringSelectMenuBuilder, StringSelectMenuOptionBuilder,
     TextChannel
 } from "discord.js";
 import {Server} from "./server";
@@ -26,9 +27,12 @@ import {BanEmbed} from "./embeds/ban.embed";
 import {PuggApi} from "./services/pugg.api";
 import {LftPlayer} from "./lft.player";
 import {LfpTeam} from "./lfp.team";
-import {MenuSetupComponents} from "./components/menu.setup.components";
+import {MenuSetupComponents} from "./components/menu/menu.setup.components";
 import {MenuContentModal} from "./modals/menu/menu.content.model";
 import {MenuEmbedModal} from "./modals/menu/menu.embed.modal";
+import {MenuComponentSelectComponents} from "./components/menu.component.select.components";
+import {MenuEmbedsSelectComponents} from "./components/menu/menu.embeds.select.components";
+import {MenuComponentsSelectComponents} from "./components/menu/menu.components.select.components";
 
 export class ServerClient extends Client {
     public server: Server;
@@ -121,20 +125,31 @@ export class ServerClient extends Client {
                     const menu = await Menu.fetch(menuName, guild.id);
                     if (!menu) throw new NotFoundError(`Menu Not Found\nName: ${menuName}`)
                     if (args[1] == "add") {
-                        if (args[2] == "content") await interaction.showModal(new MenuContentModal(args[3]));
-                        if (args[2] == "embed") await interaction.showModal(new MenuEmbedModal(args[3]));
+                        if (args[2] == "embed") {
+                            if (menu.embeds.length == 5) await interaction.reply({ content: "Sorry, the maximum total embeds is 5.", ephemeral: true});
+                            else await interaction.showModal(new MenuEmbedModal(menu));
+                        }
                         if (args[2] == "component") {
+                            if (menu.components.length == 5) await interaction.reply({ content: "Sorry, the maximum total components is 5.", ephemeral: true});
+                            else await interaction.reply({ components: [ new MenuComponentSelectComponents(menuName) ], ephemeral: true });
                         }
                     }
                     if (args[1] == "edit") {
                         if (args[2] == "content") {
-
+                            await interaction.showModal(new MenuContentModal(menu));
                         }
                         if (args[2] == "embed") {
-
+                            if (menu.embeds.length < 1) await interaction.reply({ content: "Sorry, there are no embeds to edit yet.", ephemeral: true });
+                            else await interaction.reply({ components: [ new MenuEmbedsSelectComponents(menu) ], ephemeral: true });
                         }
                         if (args[2] == "component") {
-
+                            if (menu.components.length < 1) await interaction.reply({ content: "Sorry, there are no components to edit yet.", ephemeral: true });
+                            else await interaction.reply({ components: [ new MenuComponentsSelectComponents(menu) ], ephemeral: true });
+                        }
+                    }
+                    if (args[1] == "render") {
+                        if (args[2] == "all") {
+                            await interaction.reply({ content: menu.content, embeds: menu.embeds, components: menu.components, ephemeral: true });
                         }
                     }
                     if(args[1] == "delete") {
@@ -145,7 +160,7 @@ export class ServerClient extends Client {
                         }
                         if (args[2] == "embed") {
                             const index = Number.parseInt(args[4]);
-                            
+
                         }
                         if (args[2] == "component") {
                             const index = Number.parseInt(args[4]);
@@ -198,7 +213,40 @@ export class ServerClient extends Client {
                 const args = customId.split("-");
 
                 if (args[0] == "menu") {
+                    const menuName = args[3];
+                    const menu = await Menu.fetch(menuName, guild.id);
+                    if (!menu) throw new NotFoundError(`Menu Not Found\nName: ${menuName}`)
+                    if (args[1] == "add") {
+                        if (args[2] == "component") {
+                            if (interaction.values[0] == "button") {
+                                const actionRow = new ActionRowBuilder<ButtonBuilder>().toJSON();
+                                menu.components.push(actionRow);
+                                await menu.save();
+                                await interaction.reply({ content: "Button Row Added!", ephemeral: true});
+                            }
+                            if (interaction.values[0] == "select") {
+                                const actionRow = new ActionRowBuilder<StringSelectMenuBuilder>()
+                                    .addComponents(
+                                        new StringSelectMenuBuilder()
+                                            .setCustomId(`component-${menu.components.length}-${menu.name}`)
+                                    )
+                                    .toJSON();
+                                menu.components.push(actionRow);
+                                await menu.save();
+                                await interaction.reply({ content: "Drop Down Menu Added!", ephemeral: true});
+                            }
+                        }
+                    }
+                    if (args[1] == "edit") {
+                        const index = Number.parseInt(interaction.values[0]);
+                        if (args[2] == "embed") {
+                            await interaction.showModal(new MenuEmbedModal(menu, index));
+                        }
+                        if (args[2] == "component") {
 
+                        }
+                    }
+                    return;
                 }
                 else if (args[0] == "setup") {
                     const menuName = interaction.values[0];
@@ -228,8 +276,6 @@ export class ServerClient extends Client {
                             return;
                         }
                     }
-
-                    throw new NotFoundError(`Button Not Found\nCustomId: ${customId}`);
                 }
 
                 throw new NotFoundError(`StringSelectMenu Not Found\nCustomId: ${customId}`);
@@ -296,14 +342,10 @@ export class ServerClient extends Client {
                     const year = interaction.fields.getTextInputValue("academicYear");
                     const other = interaction.fields.getTextInputValue("otherInfo");
                     const player = await PuggApi.fetchLftPlayer(member.id);
-                    const content = `Output {
-                            **Username**: ${username}
-                            **Experience**: ${experience}
-                            **Hours Available**: ${hours}
-                            **Roles**: ${roles}
-                            **Year**: ${year}
-                            **Other Info**: ${other}
-                        }`
+                    const content = "Output {\n" +
+                        `\t**Username**: ${username}\n\t**Experience**: ${experience}\n\t**Hours Available**: ${hours}\n` +
+                        `\t**Roles**: ${roles}\n\t**Year**: ${year}\n\t**Other Info**: ${other}\n` +
+                        "}"
 
                     if (!player) {
                         const player = new LftPlayer(member.id, 0, username, experience, hours, roles, year, other);
@@ -331,14 +373,10 @@ export class ServerClient extends Client {
                     const year = interaction.fields.getTextInputValue("academicYear");
                     const other = interaction.fields.getTextInputValue("otherInfo");
                     const team = await PuggApi.fetchLfpTeam(teamName);
-                    const content = `Output {
-                            **Team Name**: ${teamName}
-                            **Experience**: ${experience}
-                            **Hours Available**: ${hours}
-                            **Roles**: ${roles}
-                            **Year**: ${year}
-                            **Other Info**: ${other}
-                        }`
+                    const content = "Output {\n" +
+                        `\t**Team Name**: ${teamName}\n\t**Experience**: ${experience}\n\t**Hours Available**: ${hours}\n` +
+                        `\t**Roles**: ${roles}\n\t**Year**: ${year}\n\t**Other Info**: ${other}\n` +
+                    "}"
 
                     if (!team) {
                         const team = new LfpTeam(member.id, 0, teamName, experience, hours, roles, year, other);
@@ -389,6 +427,10 @@ export class ServerClient extends Client {
                                     return;
                                 }
                             }
+                            try {
+                                const color = interaction.fields.getTextInputValue("color");
+                                embed.setColor(color as HexColorString);
+                            } catch {  }
                             menu.embeds.push(embed.toJSON());
                             await menu.save();
                             await interaction.reply({ content: "Embed successfully added.", ephemeral: true });

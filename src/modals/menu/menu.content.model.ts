@@ -1,7 +1,8 @@
 import {ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle} from "discord.js";
+import {Menu} from "../../menu";
 
 export class MenuContentModal extends ModalBuilder {
-    constructor(menuName: string) {
+    constructor(menu: Menu) {
         super();
         const actionRow = new ActionRowBuilder<TextInputBuilder>()
             .addComponents(
@@ -10,7 +11,8 @@ export class MenuContentModal extends ModalBuilder {
                     .setStyle(TextInputStyle.Paragraph)
                     .setLabel("Please enter a message")
                     .setPlaceholder("Ex: Use the buttons below to get roles")
+                    .setValue(menu.content)
             )
-        this.setCustomId(`menu-add-content-${menuName}`).addComponents(actionRow).setTitle("Menu Content");
+        this.setCustomId(`menu-add-content-${menu.name}`).addComponents(actionRow).setTitle("Menu Content");
     }
 }

@@ -2,17 +2,16 @@ import {Command, ServerName} from "../command";
 import {
     ActivityType,
     ChatInputCommandInteraction,
-    Client,
     Guild,
     SlashCommandBuilder
 } from "discord.js";
 import {NotFoundError} from "../error";
 import {PuggApi} from "../services/pugg.api";
-import * as fs from "fs";
+import {StatusManager} from "../status";
 
 const builder = new SlashCommandBuilder()
-    .setName("test")
-    .setDescription("test")
+    .setName("status")
+    .setDescription("status")
     .addIntegerOption((integer) => integer
         .setName("activity_type")
         .setDescription("The type of activity")
@@ -39,10 +38,8 @@ async function execute(interaction: ChatInputCommandInteraction) {
 
     const activityName = interaction.options.getString("activity_name") as string;
     const activityType = interaction.options.getInteger("activity_type") as ActivityType;
-    const client = new Client({ intents: [  ] });
-    client.user?.setActivity({name: activityName, type: activityType});
+    await StatusManager.set(server, activityName, activityType);
 
-    fs.writeFileSync("./status.json", JSON.stringify({ name: activityName, type: activityType }, null, 2));
     await interaction.reply({ content: "Success", ephemeral: true });
 }
 

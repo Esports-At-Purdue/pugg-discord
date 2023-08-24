@@ -9,6 +9,7 @@ import {ServerClient} from "./server.client";
 import axios from "axios";
 import * as dotenv from "dotenv";
 import * as express from "express";
+import {StatusManager} from "./status";
 
 dotenv.config({ path: `${__dirname}/.env.${process.env.NODE_ENV}` });
 axios.defaults.headers.common["key"] = process.env.BACKEND_KEY;
@@ -33,6 +34,7 @@ app.listen(1650);
 
 PuggApi.fetchAllServers().then(async (servers) => {
     await CommandManager.load();
+    await StatusManager.load();
     servers.forEach(server => {
         new ServerClient(clientOptions, server);
     });

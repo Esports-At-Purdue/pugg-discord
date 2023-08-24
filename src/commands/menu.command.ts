@@ -1,9 +1,9 @@
 import {Command, ServerName} from "../command";
 import {ChatInputCommandInteraction, Guild, SlashCommandBuilder} from "discord.js";
 import {Menu} from "../menu";
-import {MenuEditComponents} from "../components/menu.edit.components";
+import {MenuEditComponents} from "../components/menu/menu.edit.components";
 import {NotFoundError} from "../error";
-import {MenuSetupComponents} from "../components/menu.setup.components";
+import {MenuSetupComponents} from "../components/menu/menu.setup.components";
 
 enum Subcommand {
     Create = "create",
