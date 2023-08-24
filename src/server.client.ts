@@ -77,17 +77,6 @@ export class ServerClient extends Client {
         try {
             await CommandManager.loadServerCommands(this);
             const guild = await this.guilds.fetch(this.server.id);
-            const logChannel = await guild.channels.fetch(this.server.settings.channels.log) as TextChannel;
-            /*
-            await logChannel.send({
-
-                embeds: [
-                    new EmbedBuilder()
-                        .setTitle("Client Loaded")
-                        .setColor(Colors.Green)
-                ]
-            });
-                      */
         } catch (error: any) {
             await this.error(error as Error, "Loading Failed");
             setTimeout(this.load, 5 * 60 * 1000);
