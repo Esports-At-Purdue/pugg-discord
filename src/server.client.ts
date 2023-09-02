@@ -13,26 +13,36 @@ import {
     PartialGuildMember, StringSelectMenuBuilder, StringSelectMenuOptionBuilder,
     TextChannel
 } from "discord.js";
-import {Server} from "./server";
+import {Server} from "./saveables/server";
 import axios from "axios";
 import {InvalidAddressError, NotFoundError} from "./error";
-import {Menu} from "./menu";
-import {CommandManager} from "./command";
-import {Student} from "./student";
+import {Menu} from "./saveables/menu";
+import {CommandManager} from "./managers/command";
+import {Student} from "./saveables/student";
 import {PurdueModal} from "./modals/purdue.modal";
 import {Verifier} from "./verifier";
 import {LeaveEmbed} from "./embeds/leave.embed";
 import {JoinEmbed} from "./embeds/join.embed";
 import {BanEmbed} from "./embeds/ban.embed";
 import {PuggApi} from "./services/pugg.api";
-import {LftPlayer} from "./lft.player";
-import {LfpTeam} from "./lfp.team";
+import {LftPlayer} from "./saveables/lft.player";
+import {LfpTeam} from "./saveables/lfp.team";
 import {MenuSetupComponents} from "./components/menu/menu.setup.components";
 import {MenuContentModal} from "./modals/menu/menu.content.model";
 import {MenuEmbedModal} from "./modals/menu/menu.embed.modal";
 import {MenuComponentSelectComponents} from "./components/menu.component.select.components";
 import {MenuEmbedsSelectComponents} from "./components/menu/menu.embeds.select.components";
 import {MenuComponentsSelectComponents} from "./components/menu/menu.components.select.components";
+import {PurdueDirectory} from "./services/purdue.directory";
+import {WallyballModal} from "./modals/wallyball.modal";
+import {Player} from "./saveables/player";
+import {QueueManager} from "./managers/queue";
+import {QueueEmbed} from "./embeds/queue.embed";
+import {Team} from "./saveables/team";
+import {TeamEmbed} from "./embeds/team.embed";
+import {GameRecordModal} from "./modals/game.record.modal";
+import {Game} from "./saveables/game";
+import {GameEmbed} from "./embeds/game.embed";
 
 export class ServerClient extends Client {
     public server: Server;
@@ -160,6 +170,7 @@ export class ServerClient extends Client {
 
                 const role = await interaction.guild.roles.fetch(customId);
                 const member = interaction.member as GuildMember;
+
                 if (role) {
                     if (member.roles.cache.has(role.id)) {
                         if (role.id == this.server.settings.roles.member) await interaction.reply({ content: "You already have this role!", ephemeral: true });
@@ -182,6 +193,28 @@ export class ServerClient extends Client {
                             } else {
                                 const modal = new PurdueModal();
                                 await interaction.showModal(modal);
+                            }
+                        }
+                        else if (role.id == this.server.settings.roles.wallyball) {
+                            const student = await Student.fetch(member.id);
+                            const player = await Player.fetch(member.id);
+                            if (player) {
+                                await member.roles.add(role.id);
+                                await interaction.reply({ content: `You applied **<@&${role.id}>**.`, ephemeral: true });
+                            } else {
+                                if (student?.verified) {
+                                    const name = await PurdueDirectory.getNameFromAddress(student.email);
+                                    if (name) {
+                                        const firstName = name[0];
+                                        const lastName = name[name.length - 1];
+                                        await Player.newInstance(member.id, firstName, lastName, member.user.username).save();
+                                        await interaction.reply({content: `You have been registered as ${firstName} ${lastName.charAt(0)}. If you prefer a different name please use /wb nick. Thank you!`, ephemeral: true});
+                                    } else {
+                                        await interaction.showModal(new WallyballModal());
+                                    }
+                                } else {
+                                    await interaction.showModal(new WallyballModal());
+                                }
                             }
                         }
                         else {
@@ -246,6 +279,79 @@ export class ServerClient extends Client {
                     //await interaction.channel.send({ components: components });
                     return;
                 }
+                else if (args[0] == "wallyball") {
+                    if (args[1] == "remove") {
+                        await interaction.reply({ content: "Removing players from queue...", ephemeral: true });
+                        const messages = [  ]
+                        const playerIds = interaction.values;
+                        for (const playerId of playerIds) {
+                            const player = QueueManager.queue.get(playerId) as Player;
+                            QueueManager.queue.delete(playerId);
+                            messages.push(player.username);
+                        }
+                        const message = `Removed ${messages.join(", ")}`;
+                        const embed = new QueueEmbed(message, Colors.DarkOrange, QueueManager.queue);
+                        await interaction.editReply({ embeds: [ embed ] });
+                    }
+                    if (args[1] == "generate") {
+                        await interaction.reply({ content: "Generating teams...", ephemeral: true });
+                        const totalTeams = Number.parseInt(interaction.values[0]);
+                        const players = QueueManager.queue.getPlayers();
+                        const teams = [  ] as Team[];
+                        for (let i = 0; i < totalTeams; i++) {
+                            const team = await Team.create();
+                            teams.push(team);
+                        }
+                        for (let i = 0; i < players.length; i++) {
+                            const player = players[i];
+                            teams[i % totalTeams].playerIds.push(player.id);
+                        }
+                        for (let i = 0; i < totalTeams; i++) {
+                            await teams[i].save();
+                        }
+                        for (let i = 0; i < totalTeams; i += 5) {
+                            const embeds = [  ];
+                            for (let j = i; j < totalTeams; j++) {
+                                const embed = await TeamEmbed.load(teams[j]);
+                                embeds.push(embed);
+                            }
+                            await interaction.channel.send({ embeds: embeds });
+                        }
+                        await interaction.editReply({ content: "Success!" });
+                    }
+                    if (args[1] == "record") {
+                        if (args[2] == "1") {
+                            const teamOneName = interaction.values[0];
+                            const teams = await Team.fetchAll();
+                            const actionRow = new ActionRowBuilder<StringSelectMenuBuilder>();
+                            const selectMenu = new StringSelectMenuBuilder()
+                                .setCustomId(`wallyball-record-1-${teamOneName}`)
+                                .setPlaceholder("Pick the second team")
+                                .setMaxValues(1);
+                            for (let i = 0; i < teams.length && i < 5; i++) {
+                                const team = teams[i];
+                                if (team.name == teamOneName) continue;
+                                const players = await team.getPlayers() as Player[];
+                                const playerNames = players.map(player => player.username);
+                                selectMenu.addOptions(
+                                    new StringSelectMenuOptionBuilder()
+                                        .setValue(team.name)
+                                        .setLabel(`Team ${team.name}`)
+                                        .setDescription(playerNames.join(", "))
+                                );
+                            }
+                            actionRow.addComponents(selectMenu);
+                            await interaction.reply({ components: [ actionRow ] });
+                        }
+                        if (args[2] == "2") {
+                            const teamOneName = args[3];
+                            const teamTwoName = interaction.values[0];
+                            const modal = new GameRecordModal(teamOneName, teamTwoName);
+                            await interaction.showModal(modal);
+                        }
+                    }
+                    return;
+                }
                 else {
                     const roleId = interaction.values[0];
                     const role = await interaction.guild.roles.fetch(roleId);
@@ -274,6 +380,29 @@ export class ServerClient extends Client {
                 const customId = interaction.customId;
                 const args = customId.split("-");
 
+                if (args[0] == "wallyball") {
+                    await interaction.reply({ content: "Adding players to queue...", ephemeral: true });
+                    const playerIds = interaction.values;
+                    const players = await Promise.all(playerIds.map(id => Player.fetch(id)));
+                    const mentions = [  ];
+                    for (let i = 0; i < players.length; i++) {
+                        const player = players[i];
+                        if (!player) {
+                            await interaction.followUp({ content: `Could Not Add <@${playerIds[i]}>.`, ephemeral: true });
+                            continue;
+                        }
+                        if (QueueManager.queue.has(player.id)) {
+                            await interaction.followUp({ content: `${player.username} is already in the queue.`, ephemeral: true });
+                            continue;
+                        }
+                        mentions.push(player.username);
+                        QueueManager.queue.set(player.id, player);
+                    }
+                    const message = `Added ${mentions.join(", ")}`;
+                    const embed = new QueueEmbed(message, Colors.DarkGreen, QueueManager.queue);
+                    await interaction.editReply({ embeds: [ embed ] });
+                    return;
+                }
 
                 throw new NotFoundError(`UserSelectMenu Not Found\nCustomId: ${customId}`);
             }
@@ -320,6 +449,29 @@ export class ServerClient extends Client {
                             await this.error(error as Error, "Registration Failed");
                         }
                     }
+                    return;
+                }
+
+                if (args[0] == "wallyball") {
+                    if (args[1] == "register") {
+                        const firstName = interaction.fields.getTextInputValue("firstName");
+                        const lastName = interaction.fields.getTextInputValue("lastName");
+                        await Player.newInstance(member.id, firstName, lastName, member.user.username).save();
+                        await member.roles.add(this.server.settings.roles.wallyball);
+                        await interaction.reply({content: `You have been registered as ${firstName} ${lastName.charAt(0)}. If you prefer a different name please use /wb nick`, ephemeral: true });
+                    }
+
+                    if (args[1] == "record") {
+                        await interaction.reply({ content: "Recording game... "});
+                        const teamOneName = args[2];
+                        const teamTwoName = args[3];
+                        const teamOneScore = Number.parseInt(interaction.fields.getTextInputValue("teamOneScore"));
+                        const teamTwoScore = Number.parseInt(interaction.fields.getTextInputValue("teamTwoScore"));
+                        const game = await Game.record(teamOneName, teamTwoName, teamOneScore, teamTwoScore);
+                        const embed = await GameEmbed.load(game);
+                        await interaction.editReply({ content: "Game Recorded", embeds: [embed] });
+                    }
+
                     return;
                 }
 
@@ -460,9 +612,9 @@ export class ServerClient extends Client {
             try {
                 if (interaction.isRepliable()) {
                     if (interaction.replied) {
-                        await interaction.reply({ content: `An error occurred and has been logged.\n${error.message}`, ephemeral: true });
-                    } else {
                         await interaction.followUp({ content: `An error occurred and has been logged.\n${error.message}`, ephemeral: true });
+                    } else {
+                        await interaction.reply({ content: `An error occurred and has been logged.\n${error.message}`, ephemeral: true });
                     }
                 }
             } catch {

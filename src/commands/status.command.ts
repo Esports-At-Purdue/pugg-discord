@@ -1,4 +1,4 @@
-import {Command, ServerName} from "../command";
+import {Command} from "../managers/command";
 import {
     ActivityType,
     ChatInputCommandInteraction,
@@ -7,7 +7,8 @@ import {
 } from "discord.js";
 import {NotFoundError} from "../error";
 import {PuggApi} from "../services/pugg.api";
-import {StatusManager} from "../status";
+import {StatusManager} from "../managers/status";
+import {ServerName} from "../saveables/server";
 
 const builder = new SlashCommandBuilder()
     .setName("status")

@@ -1,5 +1,5 @@
 import {APIActionRowComponent, APIEmbed} from "discord.js";
-import {PuggApi} from "./services/pugg.api";
+import {PuggApi} from "../services/pugg.api";
 
 export class Menu {
     public name:    string;

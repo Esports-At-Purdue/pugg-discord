@@ -1,6 +1,7 @@
 import {Collection, SlashCommandBuilder} from "discord.js";
-import {ServerClient} from "./server.client";
-import {NotFoundError} from "./error";
+import {ServerClient} from "../server.client";
+import {NotFoundError} from "../error";
+import {ServerName} from "../saveables/server";
 
 type CommandName = string;
 
@@ -8,7 +9,7 @@ export class CommandManager {
     public static cache = new Collection<CommandName, Command>;
 
     public static async load() {
-        const commands = [ MenuCommand, SetupCommand, LftCommand, LfpCommand, TestCommand, StatusCommand ];
+        const commands = [ MenuCommand, SetupCommand, LftCommand, LfpCommand, TestCommand, StatusCommand, WallyballCommand ];
         commands.forEach(command => CommandManager.cache.set(command.name, command));
     }
 
@@ -48,17 +49,10 @@ export class Command {
     }
 }
 
-export enum ServerName {
-    Global = "Global",
-    CSGO = "CSGO",
-    Overwatch = "Overwatch",
-    Pugg = "Pugg",
-    Valorant = "Valorant",
-}
-
-import {MenuCommand} from "./commands/menu.command";
-import {SetupCommand} from "./commands/setup.command";
-import {LftCommand} from "./commands/lft.command";
-import {LfpCommand} from "./commands/lfp.command";
-import {TestCommand} from "./commands/test";
-import {StatusCommand} from "./commands/status.command";
+import {MenuCommand} from "../commands/menu.command";
+import {SetupCommand} from "../commands/setup.command";
+import {LftCommand} from "../commands/lft.command";
+import {LfpCommand} from "../commands/lfp.command";
+import {TestCommand} from "../commands/test.command";
+import {StatusCommand} from "../commands/status.command";
+import {WallyballCommand} from "../commands/wallyball.command";

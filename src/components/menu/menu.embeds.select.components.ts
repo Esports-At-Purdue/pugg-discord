@@ -1,5 +1,5 @@
 import {ActionRowBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder} from "discord.js";
-import {Menu} from "../../menu";
+import {Menu} from "../../saveables/menu";
 
 export class MenuEmbedsSelectComponents extends ActionRowBuilder<StringSelectMenuBuilder> {
     constructor(menu: Menu) {

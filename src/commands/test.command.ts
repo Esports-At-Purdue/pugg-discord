@@ -1,4 +1,4 @@
-import {Command, ServerName} from "../command";
+import {Command} from "../managers/command";
 import {
     ActionRowBuilder,
     ButtonBuilder,
@@ -9,6 +9,7 @@ import {
 } from "discord.js";
 import {NotFoundError} from "../error";
 import {PuggApi} from "../services/pugg.api";
+import {ServerName} from "../saveables/server";
 
 const builder = new SlashCommandBuilder()
     .setName("test")

@@ -1,12 +1,12 @@
 import {APIEmoji} from "discord.js";
-import {PuggApi} from "./services/pugg.api";
+import {PuggApi} from "../services/pugg.api";
 
 export class Server {
     public id:       string;
-    public name:     string;
+    public name:     ServerName;
     public settings: ServerSettings;
 
-    constructor(id: string, name: string, settings: ServerSettings) {
+    constructor(id: string, name: ServerName, settings: ServerSettings) {
         this.id = id;
         this.name = name;
         this.settings = settings;
@@ -34,11 +34,13 @@ class ServerSettings {
 class RoleSettings {
     public member: string;
     public purdue: string;
+    public wallyball: string;
     public admins: string[];
 
-    constructor(member: string, purdue: string, admins: string[]) {
+    constructor(member: string, purdue: string, wallyball: string, admins: string[]) {
         this.member = member;
         this.purdue = purdue;
+        this.wallyball = wallyball;
         this.admins = admins;
     }
 }
@@ -57,4 +59,12 @@ class ChannelSettings {
         this.admin = admin;
         this.general = general;
     }
+}
+
+export enum ServerName {
+    Global = "Global",
+    CSGO = "CSGO",
+    Overwatch = "Overwatch",
+    Pugg = "Pugg",
+    Valorant = "Valorant"
 }

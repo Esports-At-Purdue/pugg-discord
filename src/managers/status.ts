@@ -1,7 +1,7 @@
 import {ActivityType, Client} from "discord.js";
 import * as fs from "fs";
-import {Server} from "./server";
-import {NotFoundError} from "./error";
+import {Server} from "../saveables/server";
+import {NotFoundError} from "../error";
 
 export class StatusManager {
 

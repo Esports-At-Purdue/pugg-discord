@@ -1,19 +1,46 @@
 import axios from "axios";
 import {backendUrl} from "../index";
-import {Menu} from "../menu";
-import {Student} from "../student";
-import {Ticket} from "../ticket";
-import {Server} from "../server";
-import {Email} from "../email";
-import {LftPlayer} from "../lft.player";
-import {LfpTeam} from "../lfp.team";
+import {Menu} from "../saveables/menu";
+import {Student} from "../saveables/student";
+import {Ticket} from "../saveables/ticket";
+import {Server} from "../saveables/server";
+import {LftPlayer} from "../saveables/lft.player";
+import {LfpTeam} from "../saveables/lfp.team";
+import {Player} from "../saveables/player";
+import {Team} from "../saveables/team";
+import {Game} from "../saveables/game";
 
 export class PuggApi {
+
     public static async fetchStudent(studentId: string) {
         try {
             const request = await axios.get(`${backendUrl}/students/${studentId}`);
             const { id, username, email, verified } = request.data;
             return new Student(id, username, email, verified);
+        } catch {  }
+    }
+
+    public static async fetchPlayer(playerId: string) {
+        try {
+            const request = await axios.get(`${backendUrl}/players/${playerId}`);
+            const { id, firstName, lastName, username, stats } = request.data;
+            return new Player(id, firstName, lastName, username, stats);
+        } catch {  }
+    }
+
+    public static async fetchTeam(teamName: string) {
+        try {
+            const request = await axios.get(`${backendUrl}/teams/${teamName}`);
+            const { name, playerIds, stats } = request.data;
+            return new Team(name, playerIds, stats);
+        } catch {  }
+    }
+
+    public static async fetchGame(gameId: string) {
+        try {
+            const request = await axios.get(`${backendUrl}/games/${gameId}`);
+            const { id, teamOneName, teamTwoName, teamOneScore, teamTwoScore } = request.data;
+            return new Game(id, teamOneName, teamTwoName, teamOneScore, teamTwoScore);
         } catch {  }
     }
 
@@ -66,6 +93,24 @@ export class PuggApi {
         });
     }
 
+    public static async fetchAllTeams() {
+        const request = await axios.get(`${backendUrl}/teams`);
+        const data = request.data as any[];
+        return data.map(team => {
+            const { name, playerIds, stats } = team;
+            return new Team(name, playerIds, stats);
+        });
+    }
+
+    public static async fetchAllGames() {
+        const request = await axios.get(`${backendUrl}/games`);
+        const data = request.data as any[];
+        return data.map(game => {
+            const { id, teamOneName, teamTwoName, teamOneScore, teamTwoScore } = game;
+            return new Game(id, teamOneName, teamTwoName, teamOneScore, teamTwoScore);
+        });
+    }
+
     public static async fetchStudentTickets(studentId: string) {
         const request = await axios.get(`${backendUrl}/tickets/owner/${studentId}`);
         const data = request.data as any[];
@@ -104,6 +149,18 @@ export class PuggApi {
         await axios.post(`${backendUrl}/students`, student);
     }
 
+    public static async upsertPlayer(player: Player) {
+        await axios.post(`${backendUrl}/players`, player);
+    }
+
+    public static async upsertTeam(team: Team) {
+        await axios.post(`${backendUrl}/teams`, team);
+    }
+
+    public static async upsertGame(game: Game) {
+        await axios.post(`${backendUrl}/games`, game);
+    }
+
     public static async upsertTicket(ticket: Ticket) {
         await axios.post(`${backendUrl}/tickets`, ticket);
     }
@@ -112,8 +169,8 @@ export class PuggApi {
         await axios.post(`${backendUrl}/menus`, menu);
     }
 
-    public static async sendEmail(email: Email) {
-        await axios.post(`${backendUrl}/email`, email);
+    public static async sendEmail(address: string, link: string) {
+        await axios.post(`${backendUrl}/email`, { address: address, link: link });
     }
 
     public static async deleteMenu(menu: Menu) {

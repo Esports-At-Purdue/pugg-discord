@@ -1,9 +1,8 @@
 import * as crypto from "crypto";
 import {GuildMember, ModalSubmitInteraction} from "discord.js";
-import {Student} from "./student";
+import {Student} from "./saveables/student";
 import {InvalidAddressError} from "./error";
 import {PuggApi} from "./services/pugg.api";
-import {Email} from "./email";
 
 export class Verifier {
     private static readonly timer = 870000;
@@ -52,7 +51,7 @@ export class Verifier {
 
     public static async sendEmail(address: string, link: string) {
         if (!Verifier.isValidAddress(address)) throw new InvalidAddressError(address);
-        await PuggApi.sendEmail(new Email(address, link));
+        await PuggApi.sendEmail(address, link);
     }
 
     public static encrypt(text: string): {iv: string, content: string} {

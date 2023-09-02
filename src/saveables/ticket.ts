@@ -1,4 +1,4 @@
-import {PuggApi} from "./services/pugg.api";
+import {PuggApi} from "../services/pugg.api";
 
 export class Ticket {
     public channelId:   string;
