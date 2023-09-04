@@ -9,6 +9,7 @@ import {LfpTeam} from "../saveables/lfp.team";
 import {Player} from "../saveables/player";
 import {Team} from "../saveables/team";
 import {Game} from "../saveables/game";
+import {NotFoundError} from "../error";
 
 export class PuggApi {
 
@@ -32,15 +33,20 @@ export class PuggApi {
         try {
             const request = await axios.get(`${backendUrl}/teams/${teamName}`);
             const { name, playerIds, stats } = request.data;
-            return new Team(name, playerIds, stats);
+            const players = await Promise.all(playerIds.map((playerId: string) => PuggApi.fetchPlayer(playerId))) as Player[];
+            return new Team(name, players, stats);
         } catch {  }
     }
 
     public static async fetchGame(gameId: string) {
         try {
             const request = await axios.get(`${backendUrl}/games/${gameId}`);
-            const { id, teamOneName, teamTwoName, teamOneScore, teamTwoScore } = request.data;
-            return new Game(id, teamOneName, teamTwoName, teamOneScore, teamTwoScore);
+            const { id, teamOneName, teamTwoName, teamOneScore, teamTwoScore, eloChanges } = request.data;
+            const teamOne = await PuggApi.fetchTeam(teamOneName);
+            const teamTwo = await PuggApi.fetchTeam(teamTwoName);
+            if (!teamOne) throw new NotFoundError(`Team Not Found\nName: ${teamOneName}`);
+            if (!teamTwo) throw new NotFoundError(`Team Not Found\nName: ${teamTwoName}`);
+            return new Game(id, teamOne, teamTwo, teamOneScore, teamTwoScore, eloChanges);
         } catch {  }
     }
 
@@ -93,22 +99,36 @@ export class PuggApi {
         });
     }
 
+    public static async fetchAllPlayers() {
+        const request = await axios.get(`${backendUrl}/players`);
+        const data = request.data as any[];
+        return data.map(player => {
+            const { id, firstName, lastName, username, stats } = player;
+            return new Player(id, firstName, lastName, username, stats);
+        });
+    }
+
     public static async fetchAllTeams() {
         const request = await axios.get(`${backendUrl}/teams`);
         const data = request.data as any[];
-        return data.map(team => {
-            const { name, playerIds, stats } = team;
-            return new Team(name, playerIds, stats);
-        });
+        return await Promise.all(data.map(async (team) => {
+            const {name, playerIds, stats} = team;
+            const players = await Promise.all(playerIds.map((playerId: string) => PuggApi.fetchPlayer(playerId))) as Player[];
+            return new Team(name, players, stats);
+        }));
     }
 
     public static async fetchAllGames() {
         const request = await axios.get(`${backendUrl}/games`);
         const data = request.data as any[];
-        return data.map(game => {
-            const { id, teamOneName, teamTwoName, teamOneScore, teamTwoScore } = game;
-            return new Game(id, teamOneName, teamTwoName, teamOneScore, teamTwoScore);
-        });
+        return await Promise.all(data.map(async (game) => {
+            const {id, teamOneName, teamTwoName, teamOneScore, teamTwoScore, eloChanges} = game;
+            const teamOne = await PuggApi.fetchTeam(teamOneName);
+            const teamTwo = await PuggApi.fetchTeam(teamTwoName);
+            if (!teamOne) throw new NotFoundError(`Team Not Found\nName: ${teamOneName}`);
+            if (!teamTwo) throw new NotFoundError(`Team Not Found\nName: ${teamTwoName}`);
+            return new Game(id, teamOne, teamTwo, teamOneScore, teamTwoScore, eloChanges);
+        }));
     }
 
     public static async fetchStudentTickets(studentId: string) {
@@ -154,11 +174,11 @@ export class PuggApi {
     }
 
     public static async upsertTeam(team: Team) {
-        await axios.post(`${backendUrl}/teams`, team);
+        await axios.post(`${backendUrl}/teams`, team.toJSON());
     }
 
     public static async upsertGame(game: Game) {
-        await axios.post(`${backendUrl}/games`, game);
+        await axios.post(`${backendUrl}/games`, game.toJSON());
     }
 
     public static async upsertTicket(ticket: Ticket) {

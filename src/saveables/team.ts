@@ -1,25 +1,29 @@
+import { uniqueNamesGenerator, adjectives, animals } from 'unique-names-generator';
 import {PuggApi} from "../services/pugg.api";
 import {Player} from "./player";
 
 export class Team {
     public name: string;
-    public playerIds: string[];
+    public players: Player[];
     public stats: TeamStats;
 
-    constructor(name: string, playerIds: string[], stats: TeamStats) {
+    constructor(name: string, players: Player[], stats: TeamStats) {
         this.name = name;
-        this.playerIds = playerIds;
+        this.players = players;
         this.stats = stats;
     }
 
-    public async getPlayers() {
-        return await Promise.all(this.playerIds.map(playerId => Player.fetch(playerId)));
-    }
-
     public static async create() {
-        const allTeams = await PuggApi.fetchAllTeams();
+        let name = uniqueNamesGenerator({ dictionaries: [ adjectives, animals ] });
+        if (name.endsWith("s")) name += "es";
+        else name += "s";
+        while (await PuggApi.fetchTeam(name)) {
+            name = uniqueNamesGenerator({dictionaries: [adjectives, animals]});
+            if (name.endsWith("s")) name += "es";
+            else name += "s";
+        }
         const stats = new TeamStats(0, 0, 0, 0);
-        const team = new Team(String(allTeams.length), [  ], stats);
+        const team = new Team(String(name), [  ], stats);
         return await team.save();
     }
 
@@ -33,7 +37,22 @@ export class Team {
 
     public async save() {
         await PuggApi.upsertTeam(this);
+        for (const player of this.players) await player.save();
         return this;
+    }
+
+    public get properName() {
+        const words = this.name.split('_');
+        const capitalizedWords = words.map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase());
+        return capitalizedWords.join(' ');
+    }
+
+    public toJSON() {
+        return {
+            name: this.name,
+            playerIds: this.players.map(player => player.id),
+            stats: this.stats
+        }
     }
 }
 

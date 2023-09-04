@@ -15,9 +15,42 @@ export class Player {
         this.stats = stats;
     }
 
+    public get winRate() {
+        return this.stats.wins / (this.stats.wins + this.stats.losses);
+    }
+
     public static newInstance(id: string, firstName: string, lastName: string, username: string) {
-        const stats = new PlayerStats(350, 0, 0, 0, 0);
+        const stats = new PlayerStats(350, 0, 0, 0);
         return new Player(id, firstName, lastName, username, stats);
+    }
+
+    public static getRankFile(rank: number, elo: number): string {
+        if (elo < 30)   return "1-iron.png";
+        if (elo < 60)   return "2-iron.png";
+        if (elo < 100)  return "3-iron.png";
+        if (elo < 130)  return "1-bronze.png";
+        if (elo < 160)  return "2-bronze.png";
+        if (elo < 200)  return "3-bronze.png";
+        if (elo < 230)  return "1-silver.png";
+        if (elo < 260)  return "2-silver.png";
+        if (elo < 300)  return "3-silver.png";
+        if (elo < 330)  return "1-gold.png";
+        if (elo < 360)  return "2-gold.png";
+        if (elo < 400)  return "3-gold.png";
+        if (elo < 430)  return "1-plat.png";
+        if (elo < 460)  return "2-plat.png";
+        if (elo < 500)  return "3-plat.png";
+        if (elo < 530)  return "1-diamond.png";
+        if (elo < 560)  return "2-diamond.png";
+        if (elo < 600)  return "3-diamond.png";
+        if (elo < 630)  return "1-ascendant.png";
+        if (elo < 660)  return "2-ascendant.png";
+        if (elo < 700)  return "3-ascendant.png";
+        if (elo < 730)  return "1-immortal.png";
+        if (elo < 760)  return "2-immortal.png";
+        if (elo < 800)  return "3-immortal.png";
+        if (rank > 2)   return "3-immortal.png";
+        return "radiant.png"
     }
 
     public static async fetch(id: string) {
@@ -32,14 +65,12 @@ export class Player {
 
 class PlayerStats {
     public elo: number;
-    public rank: number;
     public wins: number;
     public losses: number;
     public points: number;
 
-    constructor(elo: number, rank: number, wins: number, losses: number, points: number) {
+    constructor(elo: number, wins: number, losses: number, points: number) {
         this.elo = elo;
-        this.rank = rank;
         this.wins = wins;
         this.losses = losses;
         this.points = points;

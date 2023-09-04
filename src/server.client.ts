@@ -1,19 +1,23 @@
 import {
     ActionRowBuilder,
-    AuditLogEvent, ButtonBuilder,
+    AuditLogEvent,
+    ButtonBuilder,
     Client,
     ClientOptions,
     Colors,
     EmbedBuilder,
     Events,
     GuildAuditLogsEntry,
-    GuildMember, HexColorString,
+    GuildMember,
+    HexColorString,
     Interaction,
     Message,
-    PartialGuildMember, StringSelectMenuBuilder, StringSelectMenuOptionBuilder,
-    TextChannel
+    PartialGuildMember,
+    StringSelectMenuBuilder,
+    StringSelectMenuOptionBuilder,
+    TextChannel, UserSelectMenuBuilder
 } from "discord.js";
-import {Server} from "./saveables/server";
+import {Server, ServerName} from "./saveables/server";
 import axios from "axios";
 import {InvalidAddressError, NotFoundError} from "./error";
 import {Menu} from "./saveables/menu";
@@ -43,6 +47,9 @@ import {TeamEmbed} from "./embeds/team.embed";
 import {GameRecordModal} from "./modals/game.record.modal";
 import {Game} from "./saveables/game";
 import {GameEmbed} from "./embeds/game.embed";
+import {LeaderboardImage} from "./images/leaderboard.image";
+import {LeaderboardComponent} from "./components/leaderboard.component";
+import {QueueComponent} from "./components/queue.component";
 
 export class ServerClient extends Client {
     public server: Server;
@@ -86,7 +93,6 @@ export class ServerClient extends Client {
     private async load() {
         try {
             await CommandManager.loadServerCommands(this);
-            const guild = await this.guilds.fetch(this.server.id);
         } catch (error: any) {
             await this.error(error as Error, "Loading Failed");
             setTimeout(this.load, 5 * 60 * 1000);
@@ -101,19 +107,18 @@ export class ServerClient extends Client {
         try {
             const member = interaction.member;
             const channel = interaction.channel;
-            const guild = interaction.guild;
 
             if (!(member instanceof GuildMember)) {
                 throw new NotFoundError(`GuildMember Not Found\nMember: ${member}`);
             }
 
-            if (!guild) {
-                throw new NotFoundError(`Guild Not Found`);
-            }
-
             if (!channel) {
                 throw new NotFoundError(`Channel Not Found`);
             }
+
+            const guild = member.guild;
+            const adminRoles = this.server.settings.roles.admins;
+            const isAdmin = member.roles.cache.some(role => adminRoles.some(adminRole => role.id == adminRole));
 
             if (interaction.isButton()) {
                 const customId = interaction.customId;
@@ -168,8 +173,80 @@ export class ServerClient extends Client {
                     return;
                 }
 
-                const role = await interaction.guild.roles.fetch(customId);
-                const member = interaction.member as GuildMember;
+                if (args[0] == "leaderboard") {
+                    const component = new LeaderboardComponent(0, [  ], true);
+                    await interaction.update({ components: [ component ] });
+                    const page = Number.parseInt(args[1]);
+                    const players = await PuggApi.fetchAllPlayers();
+                    const leaderboard = new LeaderboardImage(page);
+                    const attachment = await leaderboard.draw(guild, players);
+                    const actionRow = new LeaderboardComponent(page, players, false);
+                    await interaction.editReply({ components: [ actionRow ], files: [ attachment ] });
+                    return;
+                }
+
+                if (args[0] == "wallyball") {
+
+                    if (!isAdmin) {
+                        await interaction.reply({ content: "You don't have permission to use this command.", ephemeral: true });
+                        return;
+                    }
+
+                    if (args[1] == "add") {
+                        const actionRow = new ActionRowBuilder<UserSelectMenuBuilder>().addComponents(
+                            new UserSelectMenuBuilder()
+                                .setCustomId("wallyball-add")
+                                .setPlaceholder("Select all the players you want to add.")
+                                .setMaxValues(20)
+                        );
+                        await interaction.reply({ components: [ actionRow ], ephemeral: true });
+                    }
+                    if (args[1] == "remove") {
+                        const selectMenu = new StringSelectMenuBuilder().setCustomId("wallyball-remove").setPlaceholder("Select all the players you want to remove.");
+                        const players = QueueManager.queue.getPlayers();
+                        for (const player of players) {
+                            selectMenu.addOptions(
+                                new StringSelectMenuOptionBuilder()
+                                    .setValue(player.id)
+                                    .setLabel(`${player.firstName} ${player.lastName.charAt(0)}`)
+                                    .setDescription(player.username)
+                            )
+                        }
+                        const actionRow = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+                            selectMenu
+                        );
+                        await interaction.reply({ components: [ actionRow ], ephemeral: true });
+                    }
+                    if (args[1] == "clear") {
+                        QueueManager.queue.clear();
+                        const embed = new QueueEmbed("The queue has been cleared.", Colors.White, QueueManager.queue);
+                        const component = new QueueComponent(QueueManager.queue);
+                        await interaction.update({ content: `<@${member.id}> has updated the queue.`, embeds: [ embed ], components: [ component ] });
+                    }
+                    if (args[1] == "generate") {
+                        const queueSize = QueueManager.queue.size;
+
+                        if (queueSize < 2) {
+                            await interaction.reply({ content: "Sorry, you need at least 2 players to generate teams", ephemeral: true});
+                            return;
+                        }
+
+                        const actionRow = new ActionRowBuilder<StringSelectMenuBuilder>();
+                        const selectMenu = new StringSelectMenuBuilder().setCustomId("wallyball-generate").setMaxValues(1)
+                        for (let i = 2; i <= queueSize; i++) {
+                            selectMenu.addOptions(
+                                new StringSelectMenuOptionBuilder()
+                                    .setLabel(`${String(i)} Teams`)
+                                    .setValue(String(i))
+                            )
+                        }
+                        actionRow.addComponents(selectMenu);
+                        await interaction.reply({ components: [ actionRow ], ephemeral: true });
+                    }
+                    return;
+                }
+
+                const role = await guild.roles.fetch(customId);
 
                 if (role) {
                     if (member.roles.cache.has(role.id)) {
@@ -281,7 +358,7 @@ export class ServerClient extends Client {
                 }
                 else if (args[0] == "wallyball") {
                     if (args[1] == "remove") {
-                        await interaction.reply({ content: "Removing players from queue...", ephemeral: true });
+                        await interaction.deferUpdate();
                         const messages = [  ]
                         const playerIds = interaction.values;
                         for (const playerId of playerIds) {
@@ -291,10 +368,19 @@ export class ServerClient extends Client {
                         }
                         const message = `Removed ${messages.join(", ")}`;
                         const embed = new QueueEmbed(message, Colors.DarkOrange, QueueManager.queue);
-                        await interaction.editReply({ embeds: [ embed ] });
+                        const component = new QueueComponent(QueueManager.queue);
+                        if (interaction.message.reference?.messageId) {
+                            await interaction.channel.messages.edit(interaction.message.reference.messageId,
+                                { content: `<@${member.id}> has updated the queue.`, embeds: [ embed ], components: [ component ]  }
+                            );
+                        } else {
+                            await interaction.channel.send({ content: `<@${member.id}> has updated the queue.`, embeds: [ embed ], components: [ component ]  });
+                        }
+
                     }
                     if (args[1] == "generate") {
-                        await interaction.reply({ content: "Generating teams...", ephemeral: true });
+                        await interaction.deferUpdate();
+                        await interaction.channel.send({ content:  `<@${member.id}> has generated new teams!` });
                         const totalTeams = Number.parseInt(interaction.values[0]);
                         const players = QueueManager.queue.getPlayers();
                         const teams = [  ] as Team[];
@@ -304,49 +390,55 @@ export class ServerClient extends Client {
                         }
                         for (let i = 0; i < players.length; i++) {
                             const player = players[i];
-                            teams[i % totalTeams].playerIds.push(player.id);
+                            teams[i % totalTeams].players.push(player);
                         }
                         for (let i = 0; i < totalTeams; i++) {
+                            const players = teams[i].players;
+                            const totalElo = players.map(player => player.stats.elo).reduce((a, b) => a + b);
+                            const totalPlayers = players.length;
+                            teams[i].stats.elo = totalElo / totalPlayers;
                             await teams[i].save();
                         }
                         for (let i = 0; i < totalTeams; i += 5) {
                             const embeds = [  ];
                             for (let j = i; j < totalTeams; j++) {
-                                const embed = await TeamEmbed.load(teams[j]);
+                                const embed = new TeamEmbed(teams[j]);
                                 embeds.push(embed);
                             }
                             await interaction.channel.send({ embeds: embeds });
                         }
-                        await interaction.editReply({ content: "Success!" });
                     }
                     if (args[1] == "record") {
+                        if (!isAdmin) {
+                            await interaction.reply({ content: "You don't have permission to use this command.", ephemeral: true });
+                            return;
+                        }
                         if (args[2] == "1") {
                             const teamOneName = interaction.values[0];
                             const teams = await Team.fetchAll();
                             const actionRow = new ActionRowBuilder<StringSelectMenuBuilder>();
                             const selectMenu = new StringSelectMenuBuilder()
-                                .setCustomId(`wallyball-record-1-${teamOneName}`)
+                                .setCustomId(`wallyball-record-2-${teamOneName}`)
                                 .setPlaceholder("Pick the second team")
                                 .setMaxValues(1);
                             for (let i = 0; i < teams.length && i < 5; i++) {
                                 const team = teams[i];
                                 if (team.name == teamOneName) continue;
-                                const players = await team.getPlayers() as Player[];
-                                const playerNames = players.map(player => player.username);
+                                const playerNames = team.players.map(player => player.username);
                                 selectMenu.addOptions(
                                     new StringSelectMenuOptionBuilder()
                                         .setValue(team.name)
-                                        .setLabel(`Team ${team.name}`)
+                                        .setLabel(`The ${team.properName}`)
                                         .setDescription(playerNames.join(", "))
                                 );
                             }
                             actionRow.addComponents(selectMenu);
-                            await interaction.reply({ components: [ actionRow ] });
+                            await interaction.reply({ components: [ actionRow ], ephemeral: true });
                         }
                         if (args[2] == "2") {
-                            const teamOneName = args[3];
-                            const teamTwoName = interaction.values[0];
-                            const modal = new GameRecordModal(teamOneName, teamTwoName);
+                            const teamOne = await PuggApi.fetchTeam(args[3]) as Team;
+                            const teamTwo = await PuggApi.fetchTeam(interaction.values[0]) as Team;
+                            const modal = new GameRecordModal(teamOne, teamTwo);
                             await interaction.showModal(modal);
                         }
                     }
@@ -354,7 +446,7 @@ export class ServerClient extends Client {
                 }
                 else {
                     const roleId = interaction.values[0];
-                    const role = await interaction.guild.roles.fetch(roleId);
+                    const role = await guild.roles.fetch(roleId);
                     const member = interaction.member as GuildMember;
                     if (role) {
                         await interaction.update({ components: interaction.message.components });
@@ -381,7 +473,7 @@ export class ServerClient extends Client {
                 const args = customId.split("-");
 
                 if (args[0] == "wallyball") {
-                    await interaction.reply({ content: "Adding players to queue...", ephemeral: true });
+                    await interaction.deferUpdate();
                     const playerIds = interaction.values;
                     const players = await Promise.all(playerIds.map(id => Player.fetch(id)));
                     const mentions = [  ];
@@ -400,7 +492,14 @@ export class ServerClient extends Client {
                     }
                     const message = `Added ${mentions.join(", ")}`;
                     const embed = new QueueEmbed(message, Colors.DarkGreen, QueueManager.queue);
-                    await interaction.editReply({ embeds: [ embed ] });
+                    const component = new QueueComponent(QueueManager.queue);
+                    if (interaction.message.reference?.messageId) {
+                        await interaction.channel.messages.edit(interaction.message.reference.messageId,
+                            { content: `<@${member.id}> has updated the queue.`, embeds: [ embed ], components: [ component ] }
+                        );
+                    } else {
+                        await interaction.channel.send({ content: `<@${member.id}> has updated the queue.`, embeds: [ embed ], components: [ component ] });
+                    }
                     return;
                 }
 
@@ -436,6 +535,29 @@ export class ServerClient extends Client {
                 const customId = interaction.customId;
                 const args = customId.split("-");
 
+                if (args[0] == "confirm") {
+                    const input = interaction.fields.getTextInputValue("confirm");
+                    if (input.toLowerCase() != "confirm") {
+                        await interaction.reply({ content: "This action has been cancelled.", ephemeral: true });
+                        return;
+                    }
+                    if (args[1] == "wallyball") {
+                        if (args[2] == "reset") {
+                            const players = await PuggApi.fetchAllPlayers();
+                            for (const player of players) {
+                                player.stats.elo = 350;
+                                player.stats.wins = 0;
+                                player.stats.losses =  0;
+                                player.stats.points = 0;
+                                await player.save();
+                            }
+                            await interaction.channel.send({ content: `<@${member.id} has reset everyone's Valoball stats!` });
+                        }
+
+                        return;
+                    }
+                }
+
                 if (args[0] == "purdue") {
                     const email = interaction.fields.getTextInputValue("email");
                     try {
@@ -462,14 +584,14 @@ export class ServerClient extends Client {
                     }
 
                     if (args[1] == "record") {
-                        await interaction.reply({ content: "Recording game... "});
-                        const teamOneName = args[2];
-                        const teamTwoName = args[3];
+                        await interaction.deferUpdate();
+                        const teamOne = await Team.fetch(args[2]) as Team;
+                        const teamTwo = await Team.fetch(args[3]) as Team;
                         const teamOneScore = Number.parseInt(interaction.fields.getTextInputValue("teamOneScore"));
                         const teamTwoScore = Number.parseInt(interaction.fields.getTextInputValue("teamTwoScore"));
-                        const game = await Game.record(teamOneName, teamTwoName, teamOneScore, teamTwoScore);
-                        const embed = await GameEmbed.load(game);
-                        await interaction.editReply({ content: "Game Recorded", embeds: [embed] });
+                        const game = await Game.record(teamOne, teamTwo, teamOneScore, teamTwoScore);
+                        const embed = new GameEmbed(game);
+                        await interaction.channel.send({ content: `<@${member.id}> has recorded a new game!`, embeds: [embed] });
                     }
 
                     return;
@@ -594,17 +716,11 @@ export class ServerClient extends Client {
             if (interaction.isChatInputCommand()) {
                 const commandName = interaction.commandName;
                 const command = CommandManager.fetchCommand(commandName);
-                if (command.restricted) {
-                    const roles = member.roles.cache;
-                    const adminRoles = this.server.settings.roles.admins;
-                    if (roles.some(role => adminRoles.some(adminRole => role.id == adminRole))) {
-                        await command.execute(interaction);
-                    } else {
-                        await interaction.reply({ content: "You don't have permission to use this command.", ephemeral: true });
-                    }
-                } else {
-                    await command.execute(interaction);
+                if (command.restricted && !isAdmin) {
+                    await interaction.reply({ content: "You don't have permission to use this command.", ephemeral: true });
+                    return;
                 }
+                await command.execute(interaction);
                 return;
             }
         } catch (error: any) {

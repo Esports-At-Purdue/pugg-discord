@@ -1,19 +1,21 @@
 import {Colors, EmbedBuilder} from "discord.js";
 import {Team} from "../saveables/team";
 import {Player} from "../saveables/player";
+import {sprintf} from "sprintf-js";
 
 export class TeamEmbed extends EmbedBuilder {
 
-    constructor(team: Team, players: Player[]) {
+    constructor(team: Team) {
         super();
-        this.setTitle(`Team ${team.name}`);
-        const description = players.map(player => player.username).join('\n');
+        this.setTitle(`The ${team.properName}`);
+        const description = team.players.map(player => player.username).join('\n');
         this.setDescription(description);
+        this.setDescription("\`\`\`" +
+            team.players
+                .map(player => sprintf("%-24s %-4d", player.username + ":", player.stats.elo))
+                .join("\n")
+            + "\`\`\`"
+        );
         this.setColor(Colors.DarkBlue);
-    }
-
-    public static async load(team: Team) {
-        const players = await team.getPlayers();
-        return new TeamEmbed(team, players as Player[]);
     }
 }

@@ -1,7 +1,8 @@
 import {Command} from "../managers/command";
 import {
     ActionRowBuilder,
-    ChatInputCommandInteraction, Colors, EmbedBuilder,
+    ChatInputCommandInteraction,
+    Colors,
     Guild,
     GuildMember,
     SlashCommandBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder,
@@ -14,6 +15,10 @@ import {ServerName} from "../saveables/server";
 import {QueueManager} from "../managers/queue";
 import {QueueEmbed} from "../embeds/queue.embed";
 import {Team} from "../saveables/team";
+import {LeaderboardImage} from "../images/leaderboard.image";
+import {LeaderboardComponent} from "../components/leaderboard.component";
+import {ProfileImage} from "../images/profile.image";
+import {ConfirmModal} from "../modals/confirm.modal";
 
 enum Subcommand {
     Nick = "nick",
@@ -22,7 +27,10 @@ enum Subcommand {
     QueueClear = "clear",
     QueueView = "view",
     TeamGenerate = "generate",
-    GameRecord = "record"
+    GameRecord = "record",
+    Leaderboard = "leaderboard",
+    Profile = "profile",
+    Reset = "reset"
 }
 
 const builder = new SlashCommandBuilder()
@@ -36,6 +44,24 @@ const builder = new SlashCommandBuilder()
             .setDescription("your wallyball nickname")
             .setRequired(true)
         )
+    )
+    .addSubcommand((subcommand) => subcommand
+        .setName(Subcommand.Leaderboard)
+        .setDescription("leaderboard command")
+        .addIntegerOption((integer) => integer
+            .setName("page")
+            .setDescription("page number")
+            .setRequired(true)
+            .setMinValue(1)
+        )
+    )
+    .addSubcommand((subcommand) => subcommand
+        .setName(Subcommand.Reset)
+        .setDescription("reset command")
+    )
+    .addSubcommand((subcommand) => subcommand
+        .setName(Subcommand.Profile)
+        .setDescription("profile command")
     )
     .addSubcommandGroup((group) => group
         .setName("queue")
@@ -86,6 +112,9 @@ async function execute(interaction: ChatInputCommandInteraction) {
         return;
     }
 
+    const adminRoles = server.settings.roles.admins;
+    const isAdmin = member.roles.cache.some(role => adminRoles.some(adminRole => role.id == adminRole));
+
     const subcommand = interaction.options.getSubcommand();
 
     if (subcommand == Subcommand.Nick) {
@@ -96,90 +125,90 @@ async function execute(interaction: ChatInputCommandInteraction) {
     }
 
     if (subcommand == Subcommand.QueueAdd) {
-        const adminRoles = server.settings.roles.admins;
-        if (member.roles.cache.some(role => adminRoles.some(adminRole => role.id == adminRole))) {
-            const actionRow = new ActionRowBuilder<UserSelectMenuBuilder>().addComponents(
-                new UserSelectMenuBuilder()
-                    .setCustomId("wallyball-add")
-                    .setPlaceholder("Select all the players you want to add.")
-                    .setMaxValues(20)
-            );
-            await interaction.reply({ components: [ actionRow ], ephemeral: true });
-        } else {
-            await interaction.reply({ content: "You don't have permission to use this command.", ephemeral: true });
+        if (!isAdmin) {
+            await interaction.reply({content: "You don't have permission to use this command.", ephemeral: true});
+            return;
         }
+        const actionRow = new ActionRowBuilder<UserSelectMenuBuilder>().addComponents(
+            new UserSelectMenuBuilder()
+                .setCustomId("wallyball-add")
+                .setPlaceholder("Select all the players you want to add.")
+                .setMaxValues(20)
+        );
+        await interaction.reply({ components: [ actionRow ], ephemeral: true });
         return;
     }
 
     if (subcommand == Subcommand.QueueRemove) {
-        const adminRoles = server.settings.roles.admins;
-        if (member.roles.cache.some(role => adminRoles.some(adminRole => role.id == adminRole))) {
-            const selectMenu = new StringSelectMenuBuilder().setCustomId("wallyball-remove").setPlaceholder("Select all the players you want to remove.");
-            const players = QueueManager.queue.getPlayers();
-            for (const player of players) {
-                selectMenu.addOptions(
-                    new StringSelectMenuOptionBuilder()
-                        .setValue(player.id)
-                        .setLabel(`${player.firstName} ${player.lastName.charAt(0)}`)
-                        .setDescription(player.username)
-                )
-            }
-            const actionRow = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
-                selectMenu
-            );
-            await interaction.reply({ components: [ actionRow ], ephemeral: true });
-        } else {
+        if (!isAdmin) {
             await interaction.reply({ content: "You don't have permission to use this command.", ephemeral: true });
+            return;
         }
+        const selectMenu = new StringSelectMenuBuilder().setCustomId("wallyball-remove").setPlaceholder("Select all the players you want to remove.");
+        const players = QueueManager.queue.getPlayers();
+        for (const player of players) {
+            selectMenu.addOptions(
+                new StringSelectMenuOptionBuilder()
+                    .setValue(player.id)
+                    .setLabel(`${player.firstName} ${player.lastName.charAt(0)}`)
+                    .setDescription(player.username)
+            )
+        }
+        const actionRow = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+            selectMenu
+        );
+        await interaction.reply({ components: [ actionRow ], ephemeral: true });
         return;
     }
 
     if (subcommand == Subcommand.QueueClear) {
-        const adminRoles = server.settings.roles.admins;
-        if (member.roles.cache.some(role => adminRoles.some(adminRole => role.id == adminRole))) {
-            QueueManager.queue.clear();
-            await interaction.reply({ content: "The queue has been cleared.", ephemeral: true });
-        } else {
+        if (!isAdmin) {
             await interaction.reply({ content: "You don't have permission to use this command.", ephemeral: true });
+            return;
         }
+        QueueManager.queue.clear();
+        await interaction.reply({ content: "The queue has been cleared.", ephemeral: true });
         return;
     }
 
     if (subcommand == Subcommand.QueueView) {
         const message = "Current Queue";
         const embed = new QueueEmbed(message, Colors.Yellow, QueueManager.queue);
-        await interaction.reply({ embeds: [ embed ], ephemeral: true });
+        await interaction.reply({ embeds: [ embed ] });
         return;
     }
 
     if (subcommand == Subcommand.TeamGenerate) {
-        const adminRoles = server.settings.roles.admins;
-        if (member.roles.cache.some(role => adminRoles.some(adminRole => role.id == adminRole))) {
-            const queueSize = QueueManager.queue.size;
-
-            if (queueSize < 2) {
-                await interaction.reply({ content: "Sorry, you need at least 2 players to generate teams", ephemeral: true});
-                return;
-            }
-
-            const actionRow = new ActionRowBuilder<StringSelectMenuBuilder>();
-            const selectMenu = new StringSelectMenuBuilder().setCustomId("wallyball-generate").setMaxValues(1)
-            for (let i = 2; i <= queueSize; i++) {
-                selectMenu.addOptions(
-                    new StringSelectMenuOptionBuilder()
-                        .setLabel(`${String(i)} Teams`)
-                        .setValue(String(i))
-                )
-            }
-            actionRow.addComponents(selectMenu);
-            await interaction.reply({ components: [ actionRow ], ephemeral: true });
-        } else {
+        if (!isAdmin) {
             await interaction.reply({ content: "You don't have permission to use this command.", ephemeral: true });
+            return;
         }
+        const queueSize = QueueManager.queue.size;
+
+        if (queueSize < 2) {
+            await interaction.reply({ content: "Sorry, you need at least 2 players to generate teams", ephemeral: true});
+            return;
+        }
+
+        const actionRow = new ActionRowBuilder<StringSelectMenuBuilder>();
+        const selectMenu = new StringSelectMenuBuilder().setCustomId("wallyball-generate").setMaxValues(1)
+        for (let i = 2; i <= queueSize; i++) {
+            selectMenu.addOptions(
+                new StringSelectMenuOptionBuilder()
+                    .setLabel(`${String(i)} Teams`)
+                    .setValue(String(i))
+            )
+        }
+        actionRow.addComponents(selectMenu);
+        await interaction.reply({ components: [ actionRow ], ephemeral: true });
         return;
     }
 
     if (subcommand == Subcommand.GameRecord) {
+        if (!isAdmin) {
+            await interaction.reply({content: "You don't have permission to use this command.", ephemeral: true});
+            return;
+        }
         const teams = await Team.fetchAll();
         const actionRow = new ActionRowBuilder<StringSelectMenuBuilder>();
         const selectMenu = new StringSelectMenuBuilder()
@@ -188,17 +217,44 @@ async function execute(interaction: ChatInputCommandInteraction) {
             .setMaxValues(1);
         for (let i = 0; i < teams.length && i < 5; i++) {
             const team = teams[i];
-            const players = await team.getPlayers() as Player[];
-            const playerNames = players.map(player => player.username);
+            const playerNames = team.players.map(player => player.username);
             selectMenu.addOptions(
                 new StringSelectMenuOptionBuilder()
                     .setValue(team.name)
-                    .setLabel(`Team ${team.name}`)
+                    .setLabel(`The ${team.properName}`)
                     .setDescription(playerNames.join(", "))
             );
         }
         actionRow.addComponents(selectMenu);
-        await interaction.reply({ components: [ actionRow ] });
+        await interaction.reply({ components: [ actionRow ], ephemeral: true });
+    }
+
+    if (subcommand == Subcommand.Leaderboard) {
+        await interaction.deferReply();
+        const players = await PuggApi.fetchAllPlayers();
+        const page = interaction.options.getInteger("page", true);
+        const leaderboard = new LeaderboardImage(page);
+        const attachment = await leaderboard.draw(guild, players);
+        const actionRow = new LeaderboardComponent(page, players, false);
+        await interaction.editReply({ components: [ actionRow ], files: [ attachment ] });
+    }
+
+    if (subcommand == Subcommand.Profile) {
+        await interaction.deferReply();
+        const players = await PuggApi.fetchAllPlayers();
+        const profile = new ProfileImage(player);
+        const attachment = await profile.draw(guild, players);
+        await interaction.editReply({ files: [ attachment ] });
+    }
+
+    if (subcommand == Subcommand.Reset) {
+        if (!isAdmin) {
+            await interaction.reply({content: "You don't have permission to use this command.", ephemeral: true});
+            return;
+        }
+        const confirmModal = new ConfirmModal("wallyball-reset");
+        await interaction.showModal(confirmModal);
+        return;
     }
 }
 
