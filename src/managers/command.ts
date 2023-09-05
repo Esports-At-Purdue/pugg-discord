@@ -9,7 +9,9 @@ export class CommandManager {
     public static cache = new Collection<CommandName, Command>;
 
     public static async load() {
-        const commands = [ MenuCommand, SetupCommand, LftCommand, LfpCommand, TestCommand, StatusCommand, WallyballCommand ];
+        const commands = [
+            MenuCommand, SetupCommand, LftCommand, LfpCommand, TestCommand, StatusCommand, WallyballCommand, SayCommand
+        ];
         commands.forEach(command => CommandManager.cache.set(command.name, command));
     }
 
@@ -56,3 +58,4 @@ import {LfpCommand} from "../commands/lfp.command";
 import {TestCommand} from "../commands/test.command";
 import {StatusCommand} from "../commands/status.command";
 import {WallyballCommand} from "../commands/wallyball.command";
+import {SayCommand} from "../commands/say.command";

@@ -8,6 +8,13 @@ export class PurdueDirectory {
         const options = { data: formData };
         const response = await axios.get("https://www.purdue.edu/directory/", options);
         const root = parse(response.data);
-        return root.querySelector(".cn_name")?.text?.split(" ");
+        return root.querySelector(".cn-name")
+            ?.text
+            ?.split(" ")
+            ?.map(name => {
+                const firstLetter = name.charAt(0).toUpperCase();
+                const restOfName = name.slice(1);
+                return firstLetter + restOfName;
+            });
     }
 }

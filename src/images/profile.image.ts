@@ -1,6 +1,6 @@
+import {AttachmentBuilder, Guild} from "discord.js";
 import {Player} from "../saveables/player";
 import * as Canvas from "canvas";
-import {AttachmentBuilder, Guild} from "discord.js";
 import ImageUtils from "./image.utils";
 
 export class ProfileImage {
@@ -32,7 +32,7 @@ export class ProfileImage {
         ImageUtils.printImage(context, background, 0, 0, canvas.width, canvas.height);
         ImageUtils.printImage(context, rankImage, 825, 65, 200, 200);
         ImageUtils.printProfilePicture(context, avatarImage, 202, 160, 108);
-        ImageUtils.printText(context, `${player.firstName} ${player.lastName.charAt(0)}`, 202, 336, "#FFFFFF", 75,"center");
+        ImageUtils.printText(context, `${player.firstName}`, 202, 336, "#FFFFFF", 75,"center");
         ImageUtils.printText(context, `Elo:`, 365, 105, "#FFFFFF", 75,"left");
         ImageUtils.printText(context, `Sets Won:`, 365, 168, "#FFFFFF", 75,"left");
         ImageUtils.printText(context, `Points Won:`, 365, 231, "#FFFFFF", 75,"left");

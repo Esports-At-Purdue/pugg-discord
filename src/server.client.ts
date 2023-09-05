@@ -15,7 +15,8 @@ import {
     PartialGuildMember,
     StringSelectMenuBuilder,
     StringSelectMenuOptionBuilder,
-    TextChannel, UserSelectMenuBuilder
+    TextChannel,
+    UserSelectMenuBuilder
 } from "discord.js";
 import {Server, ServerName} from "./saveables/server";
 import axios from "axios";
@@ -93,6 +94,7 @@ export class ServerClient extends Client {
     private async load() {
         try {
             await CommandManager.loadServerCommands(this);
+
         } catch (error: any) {
             await this.error(error as Error, "Loading Failed");
             setTimeout(this.load, 5 * 60 * 1000);
@@ -257,7 +259,8 @@ export class ServerClient extends Client {
                             await interaction.reply({ content: `You removed **<@&${role.id}>**.`, ephemeral: true });
                         }
                         return;
-                    } else {
+                    }
+                    else {
                         if (role.id == this.server.settings.roles.member) {
                             await member.roles.add(role.id);
                             await interaction.reply({content: "Thank you, and welcome to the Server!", ephemeral: true});
@@ -285,6 +288,7 @@ export class ServerClient extends Client {
                                         const firstName = name[0];
                                         const lastName = name[name.length - 1];
                                         await Player.newInstance(member.id, firstName, lastName, member.user.username).save();
+                                        await member.roles.add(role.id);
                                         await interaction.reply({content: `You have been registered as ${firstName} ${lastName.charAt(0)}. If you prefer a different name please use /wb nick. Thank you!`, ephemeral: true});
                                     } else {
                                         await interaction.showModal(new WallyballModal());
@@ -300,7 +304,8 @@ export class ServerClient extends Client {
                         }
                         return;
                     }
-                } else {
+                }
+                else {
                     await interaction.reply({ content: "Sorry, this is a legacy role and cannot be applied.", ephemeral: true });
                     return;
                 }
@@ -543,6 +548,7 @@ export class ServerClient extends Client {
                     }
                     if (args[1] == "wallyball") {
                         if (args[2] == "reset") {
+                            await interaction.deferUpdate();
                             const players = await PuggApi.fetchAllPlayers();
                             for (const player of players) {
                                 player.stats.elo = 350;
@@ -551,7 +557,7 @@ export class ServerClient extends Client {
                                 player.stats.points = 0;
                                 await player.save();
                             }
-                            await interaction.channel.send({ content: `<@${member.id} has reset everyone's Valoball stats!` });
+                            await interaction.channel.send({ content: `<@${member.id}> has reset everyone's Valoball stats!` });
                         }
 
                         return;
@@ -758,7 +764,7 @@ export class ServerClient extends Client {
     private async memberAdd(member: GuildMember) {
         const guild = await this.guilds.fetch(this.server.id);
         const channel = await guild.channels.fetch(this.server.settings.channels.join) as TextChannel;
-        await channel.send({  content: `${member.user}`, embeds: [ new JoinEmbed(member) ] });
+        await channel.send({  content: `${member.user}`, embeds: [ new JoinEmbed(member) ], allowedMentions: { parse: [  ] } });
         const student = await Student.fetch(member.id);
         if (student && student.verified) {
             await member.roles.add(this.server.settings.roles.member);
@@ -770,7 +776,7 @@ export class ServerClient extends Client {
         const guild = await this.guilds.fetch(this.server.id);
         const channel = await guild.channels.fetch(this.server.settings.channels.leave) as TextChannel;
         const embed = new LeaveEmbed(member);
-        await channel.send({embeds: [embed]});
+        await channel.send({embeds: [ embed ] });
     }
 
     private async auditLogEntryCreate(entry: GuildAuditLogsEntry) {

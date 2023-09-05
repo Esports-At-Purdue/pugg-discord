@@ -196,4 +196,8 @@ export class PuggApi {
     public static async deleteMenu(menu: Menu) {
         await axios.delete(`${backendUrl}/menus/${menu.guildId}/${menu.name}`);
     }
+
+    public static async deletePlayer(player: Player) {
+        await axios.delete(`${backendUrl}/players/${player.id}`);
+    }
 }

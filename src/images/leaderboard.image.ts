@@ -38,7 +38,7 @@ export class LeaderboardImage {
             const rankImage = await Canvas.loadImage(`./src/media/${Player.getRankFile(rank, player.stats.elo)}`);
             ImageUtils.printImage(context, rankImage, 144, 400 + 200 * i, 125, 125);
             ImageUtils.printProfilePicture(context, avatarImage, 980, 460 + 200 * i, 64);
-            ImageUtils.printText(context, `${player.firstName} ${player.lastName.charAt(0)}`, 1080, 515 + 200 * i, "#FFFFFF", 150, "left");
+            ImageUtils.printText(context, `${player.firstName}`, 1080, 515 + 200 * i, "#FFFFFF", 150, "left");
             ImageUtils.printText(context, `${player.stats.elo} Elo`, 2200, 515 + 200 * i, "#FFFFFF", 150, "center");
             ImageUtils.printText(context, `${ImageUtils.ordinalSuffixOf(rank)}`, 550, 515 + 200 * i, "#FFFFFF",  150, "center");
         }

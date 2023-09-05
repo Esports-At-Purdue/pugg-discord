@@ -17,11 +17,10 @@ axios.defaults.headers.common["key"] = process.env.BACKEND_KEY;
 
 const clientOptions = {
     intents: [
-        GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.GuildModeration, GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.DirectMessages, GatewayIntentBits.GuildPresences,
-        GatewayIntentBits.GuildMessageReactions, GatewayIntentBits.DirectMessageReactions,
-        GatewayIntentBits.MessageContent
+        GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers,
+        GatewayIntentBits.GuildModeration, GatewayIntentBits.GuildVoiceStates,
+        GatewayIntentBits.GuildPresences, GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.GuildMessageReactions, GatewayIntentBits.MessageContent
     ],
     allowedMentions: {
         parse: [ "users" ] as MessageMentionTypes[]

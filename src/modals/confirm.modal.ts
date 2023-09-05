@@ -5,11 +5,11 @@ export class ConfirmModal extends ModalBuilder {
         super();
         this.setCustomId(`confirm-${id}`);
         this.setTitle("Confirm Action");
-        this.addComponents(
-            new ActionRowBuilder<TextInputBuilder>().addComponents(
+        this.setComponents(
+            new ActionRowBuilder<TextInputBuilder>().setComponents(
                 new TextInputBuilder()
-                    .setValue("confirm")
-                    .setLabel("please type confirm")
+                    .setCustomId("confirm")
+                    .setLabel("please type \"confirm\"")
                     .setStyle(TextInputStyle.Short)
                     .setMaxLength("confirm".length)
             )

@@ -10,6 +10,6 @@ export class WallyballModal extends ModalBuilder {
         const lastNameInput = new TextInputBuilder().setCustomId("lastName").setLabel(lastNamePrompt).setStyle(TextInputStyle.Short);
         const firstNameRow = new ActionRowBuilder<TextInputBuilder>().addComponents(firstNameInput);
         const lastNameRow = new ActionRowBuilder<TextInputBuilder>().addComponents(lastNameInput);
-        this.setCustomId("wallyball").setTitle("Wallyball Registration").addComponents(firstNameRow, lastNameRow);
+        this.setCustomId("wallyball-register").setTitle("Wallyball Registration").addComponents(firstNameRow, lastNameRow);
     }
 }
