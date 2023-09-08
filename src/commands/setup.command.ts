@@ -1,4 +1,4 @@
-import {Command} from "../managers/command";
+import {Command} from "../managers/command.manager";
 import {ChatInputCommandInteraction, Guild, SlashCommandBuilder} from "discord.js";
 import {NotFoundError} from "../error";
 import {PuggApi} from "../services/pugg.api";

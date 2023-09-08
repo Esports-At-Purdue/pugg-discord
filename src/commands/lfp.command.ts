@@ -1,4 +1,4 @@
-import {Command} from "../managers/command";
+import {Command} from "../managers/command.manager";
 import {ChatInputCommandInteraction, SlashCommandBuilder} from "discord.js";
 import {LfpModal} from "../modals/lfp.modal";
 import {ServerName} from "../saveables/server";

@@ -1,4 +1,4 @@
-import {Command} from "../managers/command";
+import {Command} from "../managers/command.manager";
 import {
     ActionRowBuilder,
     ButtonBuilder,

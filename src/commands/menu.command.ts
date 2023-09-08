@@ -1,4 +1,4 @@
-import {Command} from "../managers/command";
+import {Command} from "../managers/command.manager";
 import {ChatInputCommandInteraction, Guild, SlashCommandBuilder} from "discord.js";
 import {Menu} from "../saveables/menu";
 import {MenuEditComponents} from "../components/menu/menu.edit.components";

@@ -1,5 +1,5 @@
 import {ColorResolvable, EmbedBuilder} from "discord.js";
-import {Queue} from "../managers/queue";
+import {Queue} from "../managers/queue.manager";
 
 export class QueueEmbed extends EmbedBuilder {
     constructor(message: string, color: ColorResolvable, queue: Queue) {

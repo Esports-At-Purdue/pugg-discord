@@ -2,9 +2,9 @@ import {
     GatewayIntentBits,
     MessageMentionTypes
 } from "discord.js";
-import {CommandManager} from "./managers/command";
-import {ServerManager} from "./managers/server";
-import {QueueManager} from "./managers/queue";
+import {CommandManager} from "./managers/command.manager";
+import {ServerManager} from "./managers/server.manager";
+import {QueueManager} from "./managers/queue.manager";
 import {PuggRouter} from "./services/pugg.router";
 import {PuggApi} from "./services/pugg.api";
 import * as dotenv from "dotenv";

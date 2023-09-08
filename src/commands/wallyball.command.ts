@@ -1,4 +1,4 @@
-import {Command} from "../managers/command";
+import {Command} from "../managers/command.manager";
 import {
     ActionRowBuilder,
     ChatInputCommandInteraction,
@@ -12,7 +12,7 @@ import {NotFoundError} from "../error";
 import {PuggApi} from "../services/pugg.api";
 import {Player} from "../saveables/player";
 import {ServerName} from "../saveables/server";
-import {QueueManager} from "../managers/queue";
+import {QueueManager} from "../managers/queue.manager";
 import {QueueEmbed} from "../embeds/queue.embed";
 import {Team} from "../saveables/team";
 import {LeaderboardImage} from "../images/leaderboard.image";

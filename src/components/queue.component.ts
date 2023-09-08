@@ -1,5 +1,5 @@
 import {ActionRowBuilder, ButtonBuilder, ButtonStyle} from "discord.js";
-import {Queue} from "../managers/queue";
+import {Queue} from "../managers/queue.manager";
 
 export class QueueComponent extends ActionRowBuilder<ButtonBuilder> {
     constructor(queue: Queue) {

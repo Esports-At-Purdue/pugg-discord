@@ -22,7 +22,7 @@ import {Server, ServerName} from "./saveables/server";
 import axios from "axios";
 import {InvalidAddressError, NotFoundError} from "./error";
 import {Menu} from "./saveables/menu";
-import {CommandManager} from "./managers/command";
+import {CommandManager} from "./managers/command.manager";
 import {Student} from "./saveables/student";
 import {PurdueModal} from "./modals/purdue.modal";
 import {Verifier} from "./verifier";
@@ -41,7 +41,7 @@ import {MenuComponentsSelectComponents} from "./components/menu/menu.components.
 import {PurdueDirectory} from "./services/purdue.directory";
 import {WallyballModal} from "./modals/wallyball.modal";
 import {Player} from "./saveables/player";
-import {QueueManager} from "./managers/queue";
+import {QueueManager} from "./managers/queue.manager";
 import {QueueEmbed} from "./embeds/queue.embed";
 import {Team} from "./saveables/team";
 import {TeamEmbed} from "./embeds/team.embed";
