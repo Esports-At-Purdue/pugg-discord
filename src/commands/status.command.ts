@@ -7,8 +7,8 @@ import {
 } from "discord.js";
 import {NotFoundError} from "../error";
 import {PuggApi} from "../services/pugg.api";
-import {StatusManager} from "../managers/status";
 import {ServerName} from "../saveables/server";
+import {ServerManager} from "../managers/server";
 
 const builder = new SlashCommandBuilder()
     .setName("status")
@@ -39,7 +39,7 @@ async function execute(interaction: ChatInputCommandInteraction) {
 
     const activityName = interaction.options.getString("activity_name") as string;
     const activityType = interaction.options.getInteger("activity_type") as ActivityType;
-    await StatusManager.set(server, activityName, activityType);
+    await ServerManager.setStatus(server.name, activityName, activityType);
 
     await interaction.reply({ content: "Success", ephemeral: true });
 }

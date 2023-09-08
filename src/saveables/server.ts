@@ -66,5 +66,9 @@ export enum ServerName {
     CSGO = "CSGO",
     Overwatch = "Overwatch",
     Pugg = "Pugg",
-    Valorant = "Valorant"
+    Valorant = "Valorant",
+    CSMemers = "CSMemers",
+    Siege = "Siege",
+    Fortnite = "Fortnite",
+    Math = "Math"
 }

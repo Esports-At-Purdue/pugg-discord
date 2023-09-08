@@ -3,16 +3,15 @@ import {
     MessageMentionTypes
 } from "discord.js";
 import {CommandManager} from "./managers/command";
-import {PuggApi} from "./services/pugg.api";
+import {ServerManager} from "./managers/server";
+import {QueueManager} from "./managers/queue";
 import {PuggRouter} from "./services/pugg.router";
-import {ServerClient} from "./server.client";
-import axios from "axios";
+import {PuggApi} from "./services/pugg.api";
 import * as dotenv from "dotenv";
 import * as express from "express";
-import {StatusManager} from "./managers/status";
-import {QueueManager} from "./managers/queue";
+import axios from "axios";
 
-dotenv.config({ path: `${__dirname}/.env.${process.env.NODE_ENV}` });
+dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 axios.defaults.headers.common["key"] = process.env.BACKEND_KEY;
 
 const clientOptions = {
@@ -35,9 +34,6 @@ app.listen(1650);
 
 PuggApi.fetchAllServers().then(async (servers) => {
     await CommandManager.load();
-    await StatusManager.load();
     await QueueManager.load();
-    servers.forEach(server => {
-        new ServerClient(clientOptions, server);
-    });
+    await ServerManager.load(servers, clientOptions);
 });

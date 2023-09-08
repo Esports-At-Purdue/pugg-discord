@@ -51,6 +51,7 @@ import {GameEmbed} from "./embeds/game.embed";
 import {LeaderboardImage} from "./images/leaderboard.image";
 import {LeaderboardComponent} from "./components/leaderboard.component";
 import {QueueComponent} from "./components/queue.component";
+import {inflate} from "zlib";
 
 export class ServerClient extends Client {
     public server: Server;
@@ -759,16 +760,29 @@ export class ServerClient extends Client {
                 } catch {  }
             }
         }
+        if (this.server.name == ServerName.CSMemers) {
+            if (message.author.bot) return;
+            const content = message.content;
+
+            if (content.includes("//twitter.com") || content.includes("//x.com")) {
+                const newContent = content.replace("//twitter.com", "//fxtwitter.com").replace("//x.com", "//fxtwitter.com");
+                setTimeout(() => { message.delete() }, 1000);
+                await message.channel.send( {
+                    content: `<@${message.author.id}> says:\n> ${newContent}`,
+                    allowedMentions: { parse: [  ] }
+                })
+            }
+        }
     }
 
     private async memberAdd(member: GuildMember) {
         const guild = await this.guilds.fetch(this.server.id);
         const channel = await guild.channels.fetch(this.server.settings.channels.join) as TextChannel;
-        await channel.send({  content: `${member.user}`, embeds: [ new JoinEmbed(member) ], allowedMentions: { parse: [  ] } });
+        await channel.send({  embeds: [ new JoinEmbed(member) ] });
         const student = await Student.fetch(member.id);
         if (student && student.verified) {
-            await member.roles.add(this.server.settings.roles.member);
-            await member.roles.add(this.server.settings.roles.purdue);
+            await member.roles.add(this.server.settings.roles.member).catch(() => {});
+            await member.roles.add(this.server.settings.roles.purdue).catch(() => {});
         }
     }
 
