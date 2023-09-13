@@ -9,11 +9,11 @@ import {
 } from "discord.js";
 import {NotFoundError} from "../error";
 import {PuggApi} from "../services/pugg.api";
-import {Player} from "../models/player";
-import {ServerName} from "../models/server";
+import {Player} from "../saveables/player";
+import {ServerName} from "../saveables/server";
 import {QueueManager} from "../managers/queue.manager";
 import {QueueEmbed} from "../embeds/queue.embed";
-import {Team} from "../models/team";
+import {Team} from "../saveables/team";
 import {LeaderboardImage} from "../images/leaderboard.image";
 import {LeaderboardComponent} from "../components/leaderboard.component";
 import {ProfileImage} from "../images/profile.image";
@@ -210,7 +210,7 @@ async function execute(interaction: ChatInputCommandInteraction) {
             return;
         }
 
-        const teams = await Team.fetchAll();
+        const teams = (await Team.fetchAll()).reverse();
 
         if (teams.length < 2) {
             await interaction.reply({ content: "There must be at least two teams to record a game.", ephemeral: true });
@@ -222,14 +222,14 @@ async function execute(interaction: ChatInputCommandInteraction) {
             .setCustomId("wallyball-record-1")
             .setPlaceholder("Pick the first team")
             .setMaxValues(1);
-        for (let i = 0; i < teams.length && i < 5; i++) {
+        for (let i = 0; i < teams.length && i < 25; i++) {
             const team = teams[i];
-            const playerNames = team.players.map(player => player.username);
+            const playerNames = team.players.map(player => player.username).join(", ");
             selectMenu.addOptions(
                 new StringSelectMenuOptionBuilder()
                     .setValue(team.name)
-                    .setLabel(`The ${team.properName}`)
-                    .setDescription(playerNames.join(", "))
+                    .setLabel(`${team.properName}`.slice(0, 25))
+                    .setDescription(playerNames.length < 1 ? "Unknown" : playerNames.slice(0, 50))
             );
         }
         actionRow.addComponents(selectMenu);

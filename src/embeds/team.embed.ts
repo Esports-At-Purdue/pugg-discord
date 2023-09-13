@@ -1,6 +1,6 @@
 import {Colors, EmbedBuilder} from "discord.js";
-import {Team} from "../models/team";
-import {Player} from "../models/player";
+import {Team} from "../saveables/team";
+import {Player} from "../saveables/player";
 import {sprintf} from "sprintf-js";
 
 export class TeamEmbed extends EmbedBuilder {

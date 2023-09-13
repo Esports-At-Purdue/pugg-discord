@@ -7,7 +7,7 @@ import {
     SlashCommandBuilder
 } from "discord.js";
 import {Command} from "../command";
-import {ServerName} from "../models/server";
+import {ServerName} from "../saveables/server";
 import {PuggApi} from "../services/pugg.api";
 import {NotFoundError} from "../error";
 import {ServerManager} from "../managers/server.manager";

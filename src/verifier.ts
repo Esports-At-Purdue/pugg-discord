@@ -1,6 +1,6 @@
 import * as crypto from "crypto";
 import {GuildMember, ModalSubmitInteraction} from "discord.js";
-import {Student} from "./models/student";
+import {Student} from "./saveables/student";
 import {InvalidAddressError} from "./error";
 import {PuggApi} from "./services/pugg.api";
 

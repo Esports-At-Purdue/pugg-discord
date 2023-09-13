@@ -18,20 +18,20 @@ import {
     TextChannel,
     UserSelectMenuBuilder
 } from "discord.js";
-import {Server, ServerName} from "./models/server";
+import {Server, ServerName} from "./saveables/server";
 import axios from "axios";
 import {InvalidAddressError, NotFoundError} from "./error";
-import {Menu} from "./models/menu";
+import {Menu} from "./saveables/menu";
 import {CommandManager} from "./managers/command.manager";
-import {Student} from "./models/student";
+import {Student} from "./saveables/student";
 import {PurdueModal} from "./modals/purdue.modal";
 import {Verifier} from "./verifier";
 import {LeaveEmbed} from "./embeds/leave.embed";
 import {JoinEmbed} from "./embeds/join.embed";
 import {BanEmbed} from "./embeds/ban.embed";
 import {PuggApi} from "./services/pugg.api";
-import {LftPlayer} from "./models/lft.player";
-import {LfpTeam} from "./models/lfp.team";
+import {LftPlayer} from "./saveables/lft.player";
+import {LfpTeam} from "./saveables/lfp.team";
 import {MenuSetupComponents} from "./components/menu/menu.setup.components";
 import {MenuContentModal} from "./modals/menu/menu.content.model";
 import {MenuEmbedModal} from "./modals/menu/menu.embed.modal";
@@ -40,13 +40,13 @@ import {MenuEmbedsSelectComponents} from "./components/menu/menu.embeds.select.c
 import {MenuComponentsSelectComponents} from "./components/menu/menu.components.select.components";
 import {PurdueDirectory} from "./services/purdue.directory";
 import {WallyballModal} from "./modals/wallyball.modal";
-import {Player} from "./models/player";
+import {Player} from "./saveables/player";
 import {QueueManager} from "./managers/queue.manager";
 import {QueueEmbed} from "./embeds/queue.embed";
-import {Team} from "./models/team";
+import {Team} from "./saveables/team";
 import {TeamEmbed} from "./embeds/team.embed";
 import {GameRecordModal} from "./modals/game.record.modal";
-import {Game} from "./models/game";
+import {Game} from "./saveables/game";
 import {GameEmbed} from "./embeds/game.embed";
 import {LeaderboardImage} from "./images/leaderboard.image";
 import {LeaderboardComponent} from "./components/leaderboard.component";
@@ -389,7 +389,7 @@ export class ServerClient extends Client {
                         await interaction.deferUpdate();
                         await interaction.channel.send({ content:  `<@${member.id}> has generated new teams!` });
                         const totalTeams = Number.parseInt(interaction.values[0]);
-                        const players = QueueManager.queue.getPlayers();
+                        const players = shuffle(QueueManager.queue.getPlayers());
                         const teams = [  ] as Team[];
                         for (let i = 0; i < totalTeams; i++) {
                             const team = await Team.create();
@@ -399,17 +399,12 @@ export class ServerClient extends Client {
                             const player = players[i];
                             teams[i % totalTeams].players.push(player);
                         }
-                        for (let i = 0; i < totalTeams; i++) {
-                            const players = teams[i].players;
-                            const totalElo = players.map(player => player.stats.elo).reduce((a, b) => a + b);
-                            const totalPlayers = players.length;
-                            teams[i].stats.elo = totalElo / totalPlayers;
-                            await teams[i].save();
-                        }
-                        for (let i = 0; i < totalTeams; i += 5) {
+                        for (let i = 0; i < totalTeams; i += 10) {
                             const embeds = [  ];
-                            for (let j = i; j < totalTeams; j++) {
-                                const embed = new TeamEmbed(teams[j]);
+                            for (let j = i; j < i + 10 && j < totalTeams; j++) {
+                                const team = teams[j];
+                                await team.save();
+                                const embed = new TeamEmbed(team);
                                 embeds.push(embed);
                             }
                             await interaction.channel.send({ embeds: embeds });
@@ -422,21 +417,21 @@ export class ServerClient extends Client {
                         }
                         if (args[2] == "1") {
                             const teamOneName = interaction.values[0];
-                            const teams = await Team.fetchAll();
+                            const teams = (await Team.fetchAll()).reverse();
                             const actionRow = new ActionRowBuilder<StringSelectMenuBuilder>();
                             const selectMenu = new StringSelectMenuBuilder()
                                 .setCustomId(`wallyball-record-2-${teamOneName}`)
                                 .setPlaceholder("Pick the second team")
                                 .setMaxValues(1);
-                            for (let i = 0; i < teams.length && i < 5; i++) {
+                            for (let i = 0; i < teams.length && i < 25; i++) {
                                 const team = teams[i];
                                 if (team.name == teamOneName) continue;
-                                const playerNames = team.players.map(player => player.username);
+                                const playerNames = team.players.map(player => player.username).join(", ");
                                 selectMenu.addOptions(
                                     new StringSelectMenuOptionBuilder()
                                         .setValue(team.name)
-                                        .setLabel(`The ${team.properName}`)
-                                        .setDescription(playerNames.join(", "))
+                                        .setLabel(`${team.properName}`.slice(0, 25))
+                                        .setDescription(playerNames.length < 1 ? "Unknown" : playerNames.slice(0, 50))
                                 );
                             }
                             actionRow.addComponents(selectMenu);
@@ -826,4 +821,22 @@ export class ServerClient extends Client {
             }
         );
     }
+}
+
+function shuffle(players: Player[]) {
+    let currentIndex = players.length,  randomIndex;
+
+    // While there remain elements to shuffle.
+    while (currentIndex > 0) {
+
+        // Pick a remaining element.
+        randomIndex = Math.floor(Math.random() * currentIndex);
+        currentIndex--;
+
+        // And swap it with the current element.
+        [players[currentIndex], players[randomIndex]] = [
+            players[randomIndex], players[currentIndex]];
+    }
+
+    return players;
 }

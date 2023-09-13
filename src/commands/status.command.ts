@@ -6,7 +6,7 @@ import {
 } from "discord.js";
 import {NotFoundError} from "../error";
 import {PuggApi} from "../services/pugg.api";
-import {ServerName} from "../models/server";
+import {ServerName} from "../saveables/server";
 import {ServerManager} from "../managers/server.manager";
 import {Command} from "../command";
 

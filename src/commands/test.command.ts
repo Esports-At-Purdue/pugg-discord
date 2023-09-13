@@ -8,7 +8,7 @@ import {
 } from "discord.js";
 import {NotFoundError} from "../error";
 import {PuggApi} from "../services/pugg.api";
-import {ServerName} from "../models/server";
+import {ServerName} from "../saveables/server";
 import {Command} from "../command";
 
 const builder = new SlashCommandBuilder()

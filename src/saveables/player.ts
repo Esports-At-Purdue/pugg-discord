@@ -19,12 +19,22 @@ export class Player {
         return this.stats.wins / (this.stats.wins + this.stats.losses);
     }
 
+    public getEloChange(roundsWon: number, totalRounds: number, teamElo: number, enemyElo: number) {
+        const k = 5;
+        const winDelta = roundsWon / totalRounds;
+        const playerElo = this.stats.elo + teamElo / 2;
+        const actualOutcome = roundsWon > (totalRounds / 2) ? 1 : 0;
+        const baseChange = 1 / (1 + Math.pow(10, (enemyElo - playerElo) / 300));
+        const biasedChange = k * (actualOutcome - baseChange);
+        return winDelta > 0.5 ? biasedChange + 28 : biasedChange - 20;
+    }
+
     public static newInstance(id: string, firstName: string, lastName: string, username: string) {
         const stats = new PlayerStats(350, 0, 0, 0);
         return new Player(id, firstName, lastName, username, stats);
     }
 
-    public static getRankFile(rank: number, elo: number): string {
+    public static getRankFile(rank: number, elo: number) {
         if (elo < 30)   return "1-iron.png";
         if (elo < 60)   return "2-iron.png";
         if (elo < 100)  return "3-iron.png";
@@ -76,3 +86,23 @@ class PlayerStats {
         this.points = points;
     }
 }
+
+/*
+    public getEloChange(roundsWon: number, totalRounds: number, teamElo: number, enemyElo: number) {
+        const k = 48;
+        const l = 10;
+        const c = 400;
+        const trueElo = this.stats.elo + teamElo / 2;
+
+        const qA = Math.pow(10, trueElo / c);
+        const qB = Math.pow(10, enemyElo / c);
+        console.log(qA);
+        console.log(qB);
+
+        const trueOutcome = roundsWon > totalRounds / 2 ? 1 : 0;
+        const expectedOutcome = qA / (qA + qB);
+        const rawChange = k * (trueOutcome - expectedOutcome) + l * (roundsWon / totalRounds);
+        return Math.round(rawChange);
+    }
+
+ */

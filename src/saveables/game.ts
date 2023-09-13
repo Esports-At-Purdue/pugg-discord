@@ -20,6 +20,9 @@ export class Game {
 
     public static async record(teamOne: Team, teamTwo: Team, teamOneScore: number, teamTwoScore: number) {
         const eloChanges = [  ] as EloChange[];
+        const totalRounds = teamOneScore + teamTwoScore;
+        const teamOneElo = teamOne.players.map(player => player.stats.elo).reduce((a, b) => a + b) / teamOne.players.length;
+        const teamTwoElo = teamTwo.players.map(player => player.stats.elo).reduce((a, b) => a + b) / teamTwo.players.length;
         teamOne.stats.points += teamOneScore;
         teamTwo.stats.points += teamTwoScore;
 
@@ -27,32 +30,36 @@ export class Game {
             teamOne.stats.wins += 1;
             teamTwo.stats.losses += 1;
             for (const player of teamOne.players) {
+                const eloChange = player.getEloChange(teamOneScore, totalRounds, teamOneElo, teamTwoElo);
                 player.stats.points += teamOneScore;
                 player.stats.wins += 1;
-                player.stats.elo += 30;
-                eloChanges.push(new EloChange(player.id, 30));
+                player.stats.elo += eloChange;
+                eloChanges.push(new EloChange(player.id, eloChange));
             }
             for (const player of teamTwo.players) {
+                const eloChange = player.getEloChange(teamTwoScore, totalRounds, teamTwoElo, teamOneElo);
                 player.stats.points += teamTwoScore;
                 player.stats.losses += 1;
-                player.stats.elo -= 30;
-                eloChanges.push(new EloChange(player.id, -30));
+                player.stats.elo += eloChange;
+                eloChanges.push(new EloChange(player.id, eloChange));
             }
         }
         else if (teamTwoScore > teamOneScore) {
             teamTwo.stats.wins += 1;
             teamOne.stats.losses += 1;
             for (const player of teamOne.players) {
+                const eloChange = player.getEloChange(teamOneScore, totalRounds, teamOneElo, teamTwoElo);
                 player.stats.points += teamOneScore;
                 player.stats.losses += 1;
-                player.stats.elo -= 30;
-                eloChanges.push(new EloChange(player.id, -30));
+                player.stats.elo += eloChange;
+                eloChanges.push(new EloChange(player.id, eloChange));
             }
             for (const player of teamTwo.players) {
+                const eloChange = player.getEloChange(teamTwoScore, totalRounds, teamOneElo, teamTwoElo);
                 player.stats.points += teamTwoScore;
                 player.stats.wins += 1;
-                player.stats.elo += 30;
-                eloChanges.push(new EloChange(player.id, 30));
+                player.stats.elo += eloChange;
+                eloChanges.push(new EloChange(player.id, eloChange));
             }
         } else {
             throw new Error("Invalid Score - No Draws");

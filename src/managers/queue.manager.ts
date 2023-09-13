@@ -1,4 +1,4 @@
-import {Player} from "../models/player";
+import {Player} from "../saveables/player";
 
 export class QueueManager {
     public static queue: Queue;

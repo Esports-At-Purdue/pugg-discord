@@ -22,7 +22,7 @@ export class Team {
             if (name.endsWith("s")) name += "es";
             else name += "s";
         }
-        const stats = new TeamStats(0, 0, 0, 0);
+        const stats = new TeamStats(0, 0, 0);
         const team = new Team(String(name), [  ], stats);
         return await team.save();
     }
@@ -57,13 +57,11 @@ export class Team {
 }
 
 class TeamStats {
-    public elo: number;
     public wins: number;
     public losses: number;
     public points: number;
 
-    constructor(elo: number, wins: number, losses: number, points: number) {
-        this.elo = elo;
+    constructor(wins: number, losses: number, points: number) {
         this.wins = wins;
         this.losses = losses;
         this.points = points;

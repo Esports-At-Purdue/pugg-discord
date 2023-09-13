@@ -1,5 +1,5 @@
 import {ActionRowBuilder, ButtonBuilder, ButtonStyle} from "discord.js";
-import {Menu} from "../../models/menu";
+import {Menu} from "../../saveables/menu";
 
 export class MenuEditComponents {
     private constructor() {  }

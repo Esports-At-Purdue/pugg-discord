@@ -1,4 +1,4 @@
-import {ServerName} from "./models/server";
+import {ServerName} from "./saveables/server";
 import {SlashCommandBuilder} from "discord.js";
 
 export type CommandName = string;

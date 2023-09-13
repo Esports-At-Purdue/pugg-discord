@@ -1,7 +1,7 @@
 import {ActivityType, ClientOptions, Collection} from "discord.js";
 import {ServerClient} from "../server.client";
 import * as fs from "fs";
-import {Server, ServerName} from "../models/server";
+import {Server, ServerName} from "../saveables/server";
 import {NotFoundError} from "../error";
 
 export class ServerManager {

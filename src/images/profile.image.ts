@@ -1,5 +1,5 @@
 import {AttachmentBuilder, Guild} from "discord.js";
-import {Player} from "../models/player";
+import {Player} from "../saveables/player";
 import * as Canvas from "canvas";
 import ImageUtils from "./image.utils";
 

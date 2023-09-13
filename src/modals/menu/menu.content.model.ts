@@ -1,5 +1,5 @@
 import {ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle} from "discord.js";
-import {Menu} from "../../models/menu";
+import {Menu} from "../../saveables/menu";
 
 export class MenuContentModal extends ModalBuilder {
     constructor(menu: Menu) {

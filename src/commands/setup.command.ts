@@ -2,7 +2,7 @@ import {ChatInputCommandInteraction, Guild, SlashCommandBuilder} from "discord.j
 import {NotFoundError} from "../error";
 import {PuggApi} from "../services/pugg.api";
 import {MenuSelectComponents} from "../components/menu/menu.select.components";
-import {ServerName} from "../models/server";
+import {ServerName} from "../saveables/server";
 import {Command} from "../command";
 
 const builder = new SlashCommandBuilder()

@@ -2,7 +2,7 @@ import {Command, CommandName} from "../command";
 import {Collection} from "discord.js";
 import {ServerClient} from "../server.client";
 import {NotFoundError} from "../error";
-import {ServerName} from "../models/server";
+import {ServerName} from "../saveables/server";
 import {MenuCommand} from "../commands/menu.command";
 import {SetupCommand} from "../commands/setup.command";
 import {LftCommand} from "../commands/lft.command";
