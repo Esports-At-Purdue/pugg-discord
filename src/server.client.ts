@@ -18,20 +18,20 @@ import {
     TextChannel,
     UserSelectMenuBuilder
 } from "discord.js";
-import {Server, ServerName} from "./saveables/server";
+import {Server, ServerName} from "./models/server";
 import axios from "axios";
 import {InvalidAddressError, NotFoundError} from "./error";
-import {Menu} from "./saveables/menu";
+import {Menu} from "./models/menu";
 import {CommandManager} from "./managers/command.manager";
-import {Student} from "./saveables/student";
+import {Student} from "./models/student";
 import {PurdueModal} from "./modals/purdue.modal";
 import {Verifier} from "./verifier";
 import {LeaveEmbed} from "./embeds/leave.embed";
 import {JoinEmbed} from "./embeds/join.embed";
 import {BanEmbed} from "./embeds/ban.embed";
 import {PuggApi} from "./services/pugg.api";
-import {LftPlayer} from "./saveables/lft.player";
-import {LfpTeam} from "./saveables/lfp.team";
+import {LftPlayer} from "./models/lft.player";
+import {LfpTeam} from "./models/lfp.team";
 import {MenuSetupComponents} from "./components/menu/menu.setup.components";
 import {MenuContentModal} from "./modals/menu/menu.content.model";
 import {MenuEmbedModal} from "./modals/menu/menu.embed.modal";
@@ -40,18 +40,19 @@ import {MenuEmbedsSelectComponents} from "./components/menu/menu.embeds.select.c
 import {MenuComponentsSelectComponents} from "./components/menu/menu.components.select.components";
 import {PurdueDirectory} from "./services/purdue.directory";
 import {WallyballModal} from "./modals/wallyball.modal";
-import {Player} from "./saveables/player";
+import {Player} from "./models/player";
 import {QueueManager} from "./managers/queue.manager";
 import {QueueEmbed} from "./embeds/queue.embed";
-import {Team} from "./saveables/team";
+import {Team} from "./models/team";
 import {TeamEmbed} from "./embeds/team.embed";
 import {GameRecordModal} from "./modals/game.record.modal";
-import {Game} from "./saveables/game";
+import {Game} from "./models/game";
 import {GameEmbed} from "./embeds/game.embed";
 import {LeaderboardImage} from "./images/leaderboard.image";
 import {LeaderboardComponent} from "./components/leaderboard.component";
 import {QueueComponent} from "./components/queue.component";
 import {inflate} from "zlib";
+import {ServerManager} from "./managers/server.manager";
 
 export class ServerClient extends Client {
     public server: Server;
@@ -95,9 +96,9 @@ export class ServerClient extends Client {
     private async load() {
         try {
             await CommandManager.loadServerCommands(this);
-
+            await ServerManager.setStatus(this.server.name);
         } catch (error: any) {
-            await this.error(error as Error, "Loading Failed");
+            await this.error(error as Error, `Loading Failed\nName: ${this.server.name}`);
             setTimeout(this.load, 5 * 60 * 1000);
         }
     }

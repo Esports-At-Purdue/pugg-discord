@@ -1,4 +1,3 @@
-import {Command} from "../managers/command.manager";
 import {
     ActivityType,
     ChatInputCommandInteraction,
@@ -7,8 +6,9 @@ import {
 } from "discord.js";
 import {NotFoundError} from "../error";
 import {PuggApi} from "../services/pugg.api";
-import {ServerName} from "../saveables/server";
+import {ServerName} from "../models/server";
 import {ServerManager} from "../managers/server.manager";
+import {Command} from "../command";
 
 const builder = new SlashCommandBuilder()
     .setName("status")
@@ -39,7 +39,7 @@ async function execute(interaction: ChatInputCommandInteraction) {
 
     const activityName = interaction.options.getString("activity_name") as string;
     const activityType = interaction.options.getInteger("activity_type") as ActivityType;
-    await ServerManager.setStatus(server.name, activityName, activityType);
+    await ServerManager.updateStatus(server.name, activityName, activityType);
 
     await interaction.reply({ content: "Success", ephemeral: true });
 }

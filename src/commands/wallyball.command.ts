@@ -1,4 +1,3 @@
-import {Command} from "../managers/command.manager";
 import {
     ActionRowBuilder,
     ChatInputCommandInteraction,
@@ -10,15 +9,16 @@ import {
 } from "discord.js";
 import {NotFoundError} from "../error";
 import {PuggApi} from "../services/pugg.api";
-import {Player} from "../saveables/player";
-import {ServerName} from "../saveables/server";
+import {Player} from "../models/player";
+import {ServerName} from "../models/server";
 import {QueueManager} from "../managers/queue.manager";
 import {QueueEmbed} from "../embeds/queue.embed";
-import {Team} from "../saveables/team";
+import {Team} from "../models/team";
 import {LeaderboardImage} from "../images/leaderboard.image";
 import {LeaderboardComponent} from "../components/leaderboard.component";
 import {ProfileImage} from "../images/profile.image";
 import {ConfirmModal} from "../modals/confirm.modal";
+import {Command} from "../command";
 
 enum Subcommand {
     Nick = "nick",
@@ -206,10 +206,17 @@ async function execute(interaction: ChatInputCommandInteraction) {
 
     if (subcommand == Subcommand.GameRecord) {
         if (!isAdmin) {
-            await interaction.reply({content: "You don't have permission to use this command.", ephemeral: true});
+            await interaction.reply({ content: "You don't have permission to use this command.", ephemeral: true });
             return;
         }
+
         const teams = await Team.fetchAll();
+
+        if (teams.length < 2) {
+            await interaction.reply({ content: "There must be at least two teams to record a game.", ephemeral: true });
+            return;
+        }
+
         const actionRow = new ActionRowBuilder<StringSelectMenuBuilder>();
         const selectMenu = new StringSelectMenuBuilder()
             .setCustomId("wallyball-record-1")

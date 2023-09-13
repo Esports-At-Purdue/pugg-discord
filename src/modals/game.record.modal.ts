@@ -1,5 +1,5 @@
 import {ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle} from "discord.js";
-import {Team} from "../saveables/team";
+import {Team} from "../models/team";
 
 export class GameRecordModal extends ModalBuilder {
     constructor(teamOne: Team, teamTwo: Team) {

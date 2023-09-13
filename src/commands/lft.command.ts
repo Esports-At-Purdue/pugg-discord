@@ -1,7 +1,7 @@
-import {Command} from "../managers/command.manager";
 import {ChatInputCommandInteraction, SlashCommandBuilder} from "discord.js";
 import {LftModal} from "../modals/lft.modal";
-import {ServerName} from "../saveables/server";
+import {ServerName} from "../models/server";
+import {Command} from "../command";
 
 const builder = new SlashCommandBuilder()
     .setName('lft')

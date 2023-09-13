@@ -1,7 +1,7 @@
 import {ActivityType, ClientOptions, Collection} from "discord.js";
 import {ServerClient} from "../server.client";
 import * as fs from "fs";
-import {Server, ServerName} from "../saveables/server";
+import {Server, ServerName} from "../models/server";
 import {NotFoundError} from "../error";
 
 export class ServerManager {
@@ -20,7 +20,15 @@ export class ServerManager {
         }
     }
 
-    public static async setStatus(serverName: ServerName, name: string, activity: ActivityType ) {
+    public static async setStatus(serverName: ServerName) {
+        const json = JSON.parse(fs.readFileSync("./status.json").toString());
+        const client = ServerManager.cache.get(serverName);
+        if (!client || !json[client.server.id]) return;
+        const { name, activity } = json[client.server.id];
+        client.user?.setActivity({ name: name, type: activity });
+    }
+
+    public static async updateStatus(serverName: ServerName, name: string, activity: ActivityType ) {
         const json = JSON.parse(fs.readFileSync("./status.json").toString());
         const client = ServerManager.cache.get(serverName);
 
@@ -31,4 +39,5 @@ export class ServerManager {
 
         fs.writeFileSync("./status.json", JSON.stringify(json, null, 2));
     }
+
 }

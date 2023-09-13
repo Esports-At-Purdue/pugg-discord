@@ -1,4 +1,4 @@
-import {Menu} from "../../saveables/menu";
+import {Menu} from "../../models/menu";
 
 
 export class MenuSetupComponents {

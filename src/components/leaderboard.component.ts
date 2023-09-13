@@ -1,5 +1,5 @@
 import {ActionRowBuilder, ButtonBuilder, ButtonStyle} from "discord.js";
-import {Player} from "../saveables/player";
+import {Player} from "../models/player";
 
 export class LeaderboardComponent extends ActionRowBuilder<ButtonBuilder> {
     constructor(page: number, players: Player[], disabled: boolean) {

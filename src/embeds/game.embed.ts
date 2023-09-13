@@ -1,7 +1,7 @@
 import {Colors, EmbedBuilder} from "discord.js";
-import {Game} from "../saveables/game";
+import {Game} from "../models/game";
 import {sprintf} from "sprintf-js";
-import {Player} from "../saveables/player";
+import {Player} from "../models/player";
 
 export class GameEmbed extends EmbedBuilder {
 
