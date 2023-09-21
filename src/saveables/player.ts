@@ -26,7 +26,7 @@ export class Player {
         const actualOutcome = roundsWon > (totalRounds / 2) ? 1 : 0;
         const baseChange = 1 / (1 + Math.pow(10, (enemyElo - playerElo) / 300));
         const biasedChange = k * (actualOutcome - baseChange);
-        return winDelta > 0.5 ? biasedChange + 28 : biasedChange - 20;
+        return Math.floor(winDelta > 0.5 ? biasedChange + 28 : biasedChange - 20);
     }
 
     public static newInstance(id: string, firstName: string, lastName: string, username: string) {

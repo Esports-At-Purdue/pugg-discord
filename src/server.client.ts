@@ -1,5 +1,7 @@
 import {
     ActionRowBuilder,
+    APIActionRowComponent,
+    APIEmbed,
     AuditLogEvent,
     ButtonBuilder,
     Client,
@@ -51,8 +53,8 @@ import {GameEmbed} from "./embeds/game.embed";
 import {LeaderboardImage} from "./images/leaderboard.image";
 import {LeaderboardComponent} from "./components/leaderboard.component";
 import {QueueComponent} from "./components/queue.component";
-import {inflate} from "zlib";
 import {ServerManager} from "./managers/server.manager";
+import {DeleteComponent} from "./components/delete.component";
 
 export class ServerClient extends Client {
     public server: Server;
@@ -157,7 +159,7 @@ export class ServerClient extends Client {
                     }
                     if (args[1] == "render") {
                         if (args[2] == "all") {
-                            await interaction.reply({ content: menu.content, embeds: menu.embeds, components: menu.components, ephemeral: true });
+                            await interaction.reply({ content: menu.content, embeds: menu.embeds as APIEmbed[], components: menu.components as APIActionRowComponent<any>[], ephemeral: true });
                         }
                     }
                     if(args[1] == "delete") {
@@ -246,6 +248,15 @@ export class ServerClient extends Client {
                         }
                         actionRow.addComponents(selectMenu);
                         await interaction.reply({ components: [ actionRow ], ephemeral: true });
+                    }
+                    return;
+                }
+
+                if (args[0] == "delete") {
+                    if (member.id != args[1] && !isAdmin) {
+                        await interaction.reply({ content: "Sorry, you can't do that.", ephemeral: true });
+                    } else {
+                        await interaction.message.delete();
                     }
                     return;
                 }
@@ -396,7 +407,8 @@ export class ServerClient extends Client {
                             teams.push(team);
                         }
                         for (let i = 0; i < players.length; i++) {
-                            const player = players[i];
+                            const player = await Player.fetch(players[i].id);
+                            if (!player) throw new NotFoundError(`Player Not Found!`);
                             teams[i % totalTeams].players.push(player);
                         }
                         for (let i = 0; i < totalTeams; i += 10) {
@@ -756,8 +768,8 @@ export class ServerClient extends Client {
                 } catch {  }
             }
         }
-        if (this.server.name == ServerName.CSMemers) {
-            if (message.author.bot) return;
+
+        if (!message.author.bot) {
             const content = message.content;
 
             if (content.includes("//twitter.com") || content.includes("//x.com")) {
@@ -765,6 +777,7 @@ export class ServerClient extends Client {
                 setTimeout(() => { message.delete() }, 1000);
                 await message.channel.send( {
                     content: `<@${message.author.id}> says:\n> ${newContent}`,
+                    components: [ new DeleteComponent(message.author.id) ],
                     allowedMentions: { parse: [  ] }
                 })
             }

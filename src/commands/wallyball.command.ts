@@ -51,7 +51,7 @@ const builder = new SlashCommandBuilder()
         .addIntegerOption((integer) => integer
             .setName("page")
             .setDescription("page number")
-            .setRequired(true)
+            .setRequired(false)
             .setMinValue(1)
         )
     )
@@ -239,7 +239,7 @@ async function execute(interaction: ChatInputCommandInteraction) {
     if (subcommand == Subcommand.Leaderboard) {
         await interaction.deferReply();
         const players = await PuggApi.fetchAllPlayers();
-        const page = interaction.options.getInteger("page", true);
+        const page = interaction.options.getInteger("page") ?? 1;
         const leaderboard = new LeaderboardImage(page);
         const attachment = await leaderboard.draw(guild, players);
         const actionRow = new LeaderboardComponent(page, players, false);
@@ -265,4 +265,4 @@ async function execute(interaction: ChatInputCommandInteraction) {
     }
 }
 
-export const WallyballCommand = new Command("wb", ServerName.Valorant, true, builder, execute);
+export const WallyballCommand = new Command("wb", ServerName.Valorant, false, builder, execute);

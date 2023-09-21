@@ -32,12 +32,18 @@ export class LeaderboardImage {
         for (let i = 0; i < players.length; i++) {
             const rank = i + offset + 1;
             const player = players[i];
-            const member = await guild.members.fetch(player.id);
-            const avatarUrl = member.displayAvatarURL( { extension: "png", size: 256 });
-            const avatarImage = await Canvas.loadImage(avatarUrl);
-            const rankImage = await Canvas.loadImage(`./src/media/${Player.getRankFile(rank, player.stats.elo)}`);
-            ImageUtils.printImage(context, rankImage, 144, 400 + 200 * i, 125, 125);
-            ImageUtils.printProfilePicture(context, avatarImage, 980, 460 + 200 * i, 64);
+            try {
+                const member = await guild.members.fetch(player.id);
+                const avatarUrl = member.displayAvatarURL( { extension: "png", size: 256 });
+                const avatarImage = await Canvas.loadImage(avatarUrl);
+                const rankImage = await Canvas.loadImage(`./src/media/${Player.getRankFile(rank, player.stats.elo)}`);
+                ImageUtils.printImage(context, rankImage, 144, 400 + 200 * i, 125, 125);
+                ImageUtils.printProfilePicture(context, avatarImage, 980, 460 + 200 * i, 64);
+            } catch {
+                const rankImage = await Canvas.loadImage(`./src/media/${Player.getRankFile(rank, player.stats.elo)}`);
+                ImageUtils.printImage(context, rankImage, 144, 400 + 200 * i, 125, 125);
+                ImageUtils.printProfilePicture(context, background, 980, 460 + 200 * i, 64);
+            }
             ImageUtils.printText(context, `${player.firstName}`, 1080, 515 + 200 * i, "#FFFFFF", 150, "left");
             ImageUtils.printText(context, `${player.stats.elo} Elo`, 2200, 515 + 200 * i, "#FFFFFF", 150, "center");
             ImageUtils.printText(context, `${ImageUtils.ordinalSuffixOf(rank)}`, 550, 515 + 200 * i, "#FFFFFF",  150, "center");

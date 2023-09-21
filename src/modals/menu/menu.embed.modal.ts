@@ -18,7 +18,7 @@ export class MenuEmbedModal extends ModalBuilder {
             .setRequired(false);
         const colorText = new TextInputBuilder()
             .setCustomId("color")
-            .setStyle(TextInputStyle.Paragraph)
+            .setStyle(TextInputStyle.Short)
             .setLabel("Please enter a hex color (optional)")
             .setPlaceholder("Ex: #010101")
             .setRequired(false);
