@@ -4,6 +4,8 @@ import {
     APIEmbed,
     AuditLogEvent,
     ButtonBuilder,
+    CategoryChannel,
+    ChannelType,
     Client,
     ClientOptions,
     Colors,
@@ -55,6 +57,7 @@ import {LeaderboardComponent} from "./components/leaderboard.component";
 import {QueueComponent} from "./components/queue.component";
 import {ServerManager} from "./managers/server.manager";
 import {DeleteComponent} from "./components/delete.component";
+import {StarboardManager} from "./managers/starboard.manager";
 
 export class ServerClient extends Client {
     public server: Server;
@@ -99,6 +102,11 @@ export class ServerClient extends Client {
         try {
             await CommandManager.loadServerCommands(this);
             await ServerManager.setStatus(this.server.name);
+            if (this.server.name == ServerName.CSMemers) {
+
+                const channel = await this.channels.fetch("491443792050913280") as TextChannel;
+                await StarboardManager.load(channel);
+            }
         } catch (error: any) {
             await this.error(error as Error, `Loading Failed\nName: ${this.server.name}`);
             setTimeout(this.load, 5 * 60 * 1000);
