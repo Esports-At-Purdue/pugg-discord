@@ -12,13 +12,14 @@ import {StatusCommand} from "../commands/status.command";
 import {WallyballCommand} from "../commands/wallyball.command";
 import {SayCommand} from "../commands/say.command";
 import {HelpCommand} from "../commands/help.command";
+import {LeaderboardCommand} from "../commands/leaderboard.command";
 
 export class CommandManager {
     public static cache = new Collection<CommandName, Command>;
 
     public static async load() {
         const commands = [
-            MenuCommand, SetupCommand, LftCommand, LfpCommand, TestCommand, StatusCommand, WallyballCommand, SayCommand, HelpCommand
+            MenuCommand, SetupCommand, LftCommand, LfpCommand, TestCommand, StatusCommand, WallyballCommand, SayCommand, HelpCommand, LeaderboardCommand
         ];
         commands.forEach(command => CommandManager.cache.set(command.name, command));
     }
