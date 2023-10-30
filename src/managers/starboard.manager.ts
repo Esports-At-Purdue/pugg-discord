@@ -1,10 +1,12 @@
 import {
+    ActionRow,
+    ButtonComponent,
     Collection,
     Message,
     TextChannel
 } from "discord.js";
 
-type StarboardMessage = { votes: number, message: Message };
+type StarboardMessage = { votes: number, originalMessage: Message, message: Message };
 
 export class StarboardManager {
     public static cache: Collection<string, StarboardMessage> = new Collection<string, StarboardMessage>();
@@ -26,11 +28,30 @@ export class StarboardManager {
 
         for (const message of sortedMessages) {
             const votes = parseNumberFromString(message.content);
-            StarboardManager.cache.set(message.id, { votes: votes, message: message });
+            const buttonRow = message.components[0] as ActionRow<ButtonComponent>;
+            /*if (buttonRow) {
+                const button = buttonRow.components[0];
+                const { channelId, messageId } = parseDiscordLink(button?.url as string);
+                const originalChannel = await channel.guild.channels.fetch(channelId) as TextChannel;
+                const originalMessage = await originalChannel.messages.fetch(messageId);
+                StarboardManager.cache.set(message.id, { votes: votes, originalMessage: originalMessage, message: message });
+            } else {
+                const embed = message.embeds[0];
+                const url = embed.fields[0]
+                if (!embed.url) {
+                    console.log(embed.fields);
+                    continue;
+                }
+                const { channelId, messageId } = parseDiscordLink(embed.url);
+                const originalChannel = await channel.guild.channels.fetch(channelId) as TextChannel;
+                const originalMessage = await originalChannel.messages.fetch(messageId);
+                StarboardManager.cache.set(message.id, { votes: votes, originalMessage: originalMessage, message: message });
+            }
+
+            */
         }
 
         const leaderboardChannel = await channel.guild.channels.fetch("1156366857545187409") as TextChannel;
-
 
         setTimeout(StarboardManager.load,10 * 60 * 1000, channel);
     }
@@ -67,4 +88,19 @@ function parseNumberFromString(inputString: string) {
     } else {
         return 0;
     }
+}
+
+function parseDiscordLink(link: string) {
+    // Define a regular expression pattern to extract channel IDs
+    const pattern = /https:\/\/discord\.com\/channels\/(\d+)\/(\d+)\/(\d+)/;
+
+    // Use regex to match and extract channel IDs
+    const match = link.match(pattern);
+
+    const channelId = match ? match[2] : "";
+    const messageId = match ? match[3] : "";
+    return {
+        channelId: channelId,
+        messageId: messageId
+    };
 }

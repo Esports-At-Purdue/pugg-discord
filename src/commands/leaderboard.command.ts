@@ -13,21 +13,25 @@ const builder = new SlashCommandBuilder()
     )
 
 async function execute(interaction: ChatInputCommandInteraction) {
-    const offset = interaction.options.getInteger("offset") ?? 1;
+    const offset = interaction.options.getInteger("offset") ?? 0;
     const messages = Array.from(StarboardManager.cache.values()).slice(offset, offset + 5);
 
     let i = offset;
 
+    console.log(messages[0]);
+
     const response = messages
         .map(starboardMessage => {
             const message = starboardMessage.message;
-            return `**${ordinalSuffixOf(i++)}**: **${starboardMessage.votes} votes** | **${message.embeds[0].author?.name}** | ${message.url}`;
+            const originalMessage = starboardMessage.originalMessage;
+            return `**${ordinalSuffixOf(i++)}**: **${starboardMessage.votes} votes** | ${originalMessage.author} | ${message.url}`;
         }).join('\n');
 
     if (response.length < 1) {
         await interaction.reply({content: "Sorry - the leaderboard is either loading or this offset is too large", ephemeral: true});
         return;
     }
+
     await interaction.reply({ content: response, ephemeral: true });
 }
 

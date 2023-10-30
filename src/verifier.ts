@@ -42,7 +42,7 @@ export class Verifier {
         Verifier.insert(student.id, interaction);
     }
 
-    public static isValidAddress(email: string): boolean {
+    public static isValidAddress(email: string) {
         const domains = [ "purdue.edu", "alumni.purdue.edu", "student.purdueglobal.edu" ]
         const addressRegex = /^[^\s<>]+@[^\s<>]+\.[^\s<>]+$/;
         const addressDomain = email.split("@")[1];
@@ -54,7 +54,7 @@ export class Verifier {
         await PuggApi.sendEmail(address, link);
     }
 
-    public static encrypt(text: string): {iv: string, content: string} {
+    public static encrypt(text: string) {
         const iv = crypto.randomBytes(16);
         const cipher = crypto.createCipheriv("aes-256-ctr", process.env.BACKEND_KEY as string, iv);
         const encrypted = Buffer.concat([cipher.update(text), cipher.final()]);

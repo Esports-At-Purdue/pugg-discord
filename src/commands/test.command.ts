@@ -23,6 +23,22 @@ async function execute(interaction: ChatInputCommandInteraction) {
     if (!server) throw new NotFoundError(`Server Not Found\nServerId: ${guild.id}`);
 
     const embed = new EmbedBuilder()
+        .setTitle("PUGs")
+
+    const actionRow = new ActionRowBuilder<ButtonBuilder>()
+        .addComponents(
+            new ButtonBuilder()
+                .setCustomId("769609839466643486")
+                .setLabel("PUGs")
+                .setStyle(ButtonStyle.Secondary)
+        )
+
+    await interaction.channel?.send({ components: [ actionRow ] });
+    await interaction.reply({ content: "Success", ephemeral: true });
+
+
+    /*
+    const embed = new EmbedBuilder()
         .setTitle("Production Roles")
 
     const actionRow = new ActionRowBuilder<ButtonBuilder>()

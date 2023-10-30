@@ -4,11 +4,9 @@ import {
     APIEmbed,
     AuditLogEvent,
     ButtonBuilder,
-    CategoryChannel,
-    ChannelType,
     Client,
     ClientOptions,
-    Colors,
+    Colors, DMChannel,
     EmbedBuilder,
     Events,
     GuildAuditLogsEntry,
@@ -36,7 +34,6 @@ import {BanEmbed} from "./embeds/ban.embed";
 import {PuggApi} from "./services/pugg.api";
 import {LftPlayer} from "./saveables/lft.player";
 import {LfpTeam} from "./saveables/lfp.team";
-import {MenuSetupComponents} from "./components/menu/menu.setup.components";
 import {MenuContentModal} from "./modals/menu/menu.content.model";
 import {MenuEmbedModal} from "./modals/menu/menu.embed.modal";
 import {MenuComponentSelectComponents} from "./components/menu.component.select.components";
@@ -58,6 +55,8 @@ import {QueueComponent} from "./components/queue.component";
 import {ServerManager} from "./managers/server.manager";
 import {DeleteComponent} from "./components/delete.component";
 import {StarboardManager} from "./managers/starboard.manager";
+import {memeArray} from "./index";
+import {MemeImage} from "./images/meme.image";
 
 export class ServerClient extends Client {
     public server: Server;
@@ -103,7 +102,6 @@ export class ServerClient extends Client {
             await CommandManager.loadServerCommands(this);
             await ServerManager.setStatus(this.server.name);
             if (this.server.name == ServerName.CSMemers) {
-
                 const channel = await this.channels.fetch("491443792050913280") as TextChannel;
                 await StarboardManager.load(channel);
             }
@@ -377,9 +375,9 @@ export class ServerClient extends Client {
                     const menuName = interaction.values[0];
                     const menu = await Menu.fetch(menuName, guild.id);
                     if (!menu) throw new NotFoundError(`Menu Not Found\nMenuName: ${menuName}`)
-                    const components = new MenuSetupComponents()
+                    const components = menu.components;
                     await interaction.reply({ content: "Success!", ephemeral: true });
-                    //await interaction.channel.send({ components: components });
+                    await interaction.channel.send({ components: components });
                     return;
                 }
                 else if (args[0] == "wallyball") {
@@ -662,7 +660,7 @@ export class ServerClient extends Client {
                     const content = "Output {\n" +
                         `\t**Team Name**: ${teamName}\n\t**Experience**: ${experience}\n\t**Hours Available**: ${hours}\n` +
                         `\t**Roles**: ${roles}\n\t**Year**: ${year}\n\t**Other Info**: ${other}\n` +
-                    "}"
+                        "}"
 
                     if (!team) {
                         const team = new LfpTeam(member.id, 0, teamName, experience, hours, roles, year, other);
@@ -790,6 +788,23 @@ export class ServerClient extends Client {
                 })
             }
         }
+
+        if (this.server.name == ServerName.CSMemers) {
+            if (memeArray.includes(message.author.id)) {
+                memeArray.splice(memeArray.indexOf(message.author.id), 1);
+                const attachment = await new MemeImage(message.author).draw();
+                const memeMessage = await message.reply({ files: [ attachment ], allowedMentions: { repliedUser: true } });
+                const channel = await this.channels.fetch("1073037578653138974") as DMChannel;
+                await channel.send({ content: "Good Hit: " + memeMessage.url});
+            } else {
+                if (1000 * Math.random() < 1) {
+                    const attachment = await new MemeImage(message.author).draw();
+                    const memeMessage = await message.reply({ files: [ attachment ], allowedMentions: { repliedUser: true } });
+                    const channel = await this.channels.fetch("1073037578653138974") as DMChannel;
+                    await channel.send({ content: "Random Hit: " + memeMessage.url});
+                }
+            }
+        }
     }
 
     private async memberAdd(member: GuildMember) {
@@ -800,6 +815,12 @@ export class ServerClient extends Client {
         if (student && student.verified) {
             await member.roles.add(this.server.settings.roles.member).catch(() => {});
             await member.roles.add(this.server.settings.roles.purdue).catch(() => {});
+        }
+        if (this.server.name == ServerName.CSMemers) {
+            await member.roles.add(this.server.settings.roles.member).catch((e: any) => {
+                console.log("CSMEMERS ADD NORMIE FAILED!");
+                console.log(e);
+            });
         }
     }
 

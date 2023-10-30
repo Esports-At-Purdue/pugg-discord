@@ -1,3 +1,9 @@
+import * as dotenv from "dotenv";
+import axios from "axios";
+
+dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
+axios.defaults.headers.common["key"] = process.env.BACKEND_KEY;
+
 import {
     GatewayIntentBits,
     MessageMentionTypes
@@ -7,12 +13,8 @@ import {ServerManager} from "./managers/server.manager";
 import {QueueManager} from "./managers/queue.manager";
 import {PuggRouter} from "./services/pugg.router";
 import {PuggApi} from "./services/pugg.api";
-import * as dotenv from "dotenv";
 import * as express from "express";
-import axios from "axios";
 
-dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
-axios.defaults.headers.common["key"] = process.env.BACKEND_KEY;
 
 const clientOptions = {
     intents: [
@@ -27,6 +29,7 @@ const clientOptions = {
 };
 
 export const backendUrl = process.env.BACKEND_URL as string;
+export const memeArray = new Array<string>();
 const app = express();
 
 app.use("/", PuggRouter);
