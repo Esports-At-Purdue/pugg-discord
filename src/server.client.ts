@@ -731,6 +731,10 @@ export class ServerClient extends Client {
                     return;
                 }
 
+                if (args[0] == "feedback") {
+
+                }
+
                 throw new NotFoundError(`ModalSubmit Not Found\nCustomId: ${customId}`);
             }
 
