@@ -12,7 +12,7 @@ import {PuggApi} from "../services/pugg.api";
 import {ServerName} from "../saveables/server";
 import {Command} from "../command";
 import {channel} from "node:diagnostics_channel";
-import {memeArray} from "../index";
+import {memeArray, memerArray} from "../index";
 
 const builder = new SlashCommandBuilder()
     .setName("meme")
@@ -30,13 +30,26 @@ async function execute(interaction: ChatInputCommandInteraction) {
 
     const target = interaction.options.getUser("target", true);
 
+    if (memerArray.includes(interaction.user.id)) {
+        await interaction.reply({ content: "You have exceeded your usage of this command - please try again later", ephemeral: true });
+        return;
+    }
+
     if (memeArray.includes(target.id)) {
         await interaction.reply({ content: "This user has already been targeted", ephemeral: true });
         return;
     }
 
     memeArray.push(target.id);
+    memerArray.push(interaction.user.id);
     await interaction.reply({ content: `${target.username} has been targeted`, ephemeral: true });
+
+    setTimeout(() => {
+        if (memerArray.includes(interaction.user.id)) {
+            const index = memerArray.indexOf(interaction.user.id);
+            memerArray.splice(index, 1);
+        }
+    }, 1000 * 60 * 60);
 }
 
-export const MemeCommand = new Command("meme", ServerName.CSMemers, true, builder, execute);
+export const MemeCommand = new Command("meme", ServerName.CSMemers, false, builder, execute);

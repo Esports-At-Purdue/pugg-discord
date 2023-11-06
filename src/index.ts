@@ -30,6 +30,8 @@ const clientOptions = {
 
 export const backendUrl = process.env.BACKEND_URL as string;
 export const memeArray = new Array<string>();
+export const memerArray = new Array<string>();
+
 const app = express();
 
 app.use("/", PuggRouter);
