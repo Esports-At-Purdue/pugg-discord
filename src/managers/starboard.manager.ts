@@ -1,6 +1,6 @@
 import {
     ActionRow,
-    ButtonComponent,
+    ButtonComponent, Client,
     Collection,
     Message,
     TextChannel
@@ -16,45 +16,109 @@ export class StarboardManager {
             StarboardManager.cache.clear();
         } catch {}
 
+        const client = channel.client;
         const messages = await fetchAllMessages(channel);
         const sortedMessages = messages
             .filter(message => {
                 return message.author.id == "655390915325591629";
-            }).sort((a, b) => {
-                const aVotes = parseNumberFromString(a.content);
-                const bVotes = parseNumberFromString(b.content);
-                return bVotes - aVotes;
             });
 
-        for (const message of sortedMessages) {
-            const votes = parseNumberFromString(message.content);
-            const buttonRow = message.components[0] as ActionRow<ButtonComponent>;
-            /*if (buttonRow) {
-                const button = buttonRow.components[0];
-                const { channelId, messageId } = parseDiscordLink(button?.url as string);
-                const originalChannel = await channel.guild.channels.fetch(channelId) as TextChannel;
-                const originalMessage = await originalChannel.messages.fetch(messageId);
-                StarboardManager.cache.set(message.id, { votes: votes, originalMessage: originalMessage, message: message });
-            } else {
-                const embed = message.embeds[0];
-                const url = embed.fields[0]
-                if (!embed.url) {
-                    console.log(embed.fields);
-                    continue;
-                }
-                const { channelId, messageId } = parseDiscordLink(embed.url);
-                const originalChannel = await channel.guild.channels.fetch(channelId) as TextChannel;
-                const originalMessage = await originalChannel.messages.fetch(messageId);
-                StarboardManager.cache.set(message.id, { votes: votes, originalMessage: originalMessage, message: message });
-            }
+        const array = [];
 
-            */
+        for (const message of sortedMessages) {
+            const buttonRow = message.components[0] as ActionRow<ButtonComponent>;
+            if (buttonRow) {
+                const data = await parseMessage(client, message);
+                if (data) array.push(data);
+            } else {
+                const data = await parseOldMessage(client, message);
+                //if (data) array.push(data);
+            }
         }
+
+        const sortedArray = array.sort((a, b) => {
+            return b.votes - a.votes;
+        });
 
         const leaderboardChannel = await channel.guild.channels.fetch("1156366857545187409") as TextChannel;
 
-        setTimeout(StarboardManager.load,10 * 60 * 1000, channel);
+        //setTimeout(StarboardManager.load,10 * 60 * 1000, channel);
     }
+}
+
+// 1001676418821914636
+
+async function parseMessage(client: Client, message: Message) {
+    const votes = parseNumberFromString(message.content);
+    const embeds = message.embeds;
+
+    if (embeds.length < 1) return null;
+    if (embeds.length < 2) {
+        const messageUrlButton = message.components[0].components[0] as ButtonComponent;
+        const messageUrl = messageUrlButton.url as string;
+        const urlParts = messageUrl.split('/');
+        const channelId = urlParts[5];
+        const messageId = urlParts[6];
+
+        if (message.components[0].components[1]) {
+            const attachmentUrlButton = message.components[0].components[1] as ButtonComponent;
+            const attachmentUrl = attachmentUrlButton.url as string;
+            return {
+                channelId: channelId,
+                messageId: messageId,
+                attachmentUrl: attachmentUrl,
+                votes: votes
+            }
+        }
+        else {
+            return {
+                channelId: channelId,
+                messageId: messageId,
+                votes: votes
+            }
+        }
+    }
+    else {
+        return null;
+        /*
+        const originalMessageUrlButton = message.components[0].components[0] as ButtonComponent;
+        const referenceMessageUrlButton = message.components[0].components[1] as ButtonComponent;
+        const originalMessageUrl = originalMessageUrlButton.url as string;
+        const referenceMessageUrl = referenceMessageUrlButton.url as string;
+        const originalUrlParts = originalMessageUrl.split('/');
+        const referenceUrlParts = referenceMessageUrl.split('/');
+        const originalChannelId = originalUrlParts[5];
+        const originalMessageId = originalUrlParts[6];
+        const referenceChannelId = referenceUrlParts[5];
+        const referenceMessageId = referenceUrlParts[6];
+
+        if (message.components[0].components[2]) {
+            const attachmentUrlButton = message.components[0].components[2] as ButtonComponent;
+            const attachmentUrl = attachmentUrlButton.url as string;
+            return {
+                channelId: originalChannelId,
+                messageId: originalMessageId,
+                referenceChannelId: referenceChannelId,
+                referenceMessageId: referenceMessageId,
+                attachmentUrl: attachmentUrl,
+                votes: votes
+            }
+        }
+        else {
+            return {
+                channelId: originalChannelId,
+                messageId: originalMessageId,
+                referenceChannelId: referenceChannelId,
+                referenceMessageId: referenceMessageId,
+                votes: votes
+            }
+        }
+        */
+    }
+}
+
+async function parseOldMessage(client: Client, message: Message) {
+    const votes = parseNumberFromString(message.content);
 }
 
 async function fetchAllMessages(channel: TextChannel) {
