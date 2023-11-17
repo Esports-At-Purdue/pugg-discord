@@ -27,6 +27,8 @@ enum Subcommand {
     QueueClear = "clear",
     QueueView = "view",
     TeamGenerate = "generate",
+    TeamAdd = "add-player",
+    TeamRemove = "remove-player",
     GameRecord = "record",
     Leaderboard = "leaderboard",
     Profile = "profile",
@@ -89,6 +91,19 @@ const builder = new SlashCommandBuilder()
         .addSubcommand((subcommand) => subcommand
             .setName(Subcommand.TeamGenerate)
             .setDescription("generate teams from the queue")
+        )
+        .addSubcommand((subcommand) => subcommand
+            .setName(Subcommand.TeamAdd)
+            .setDescription("add player to a team")
+            .addUserOption((user) => user
+                .setName("target")
+                .setDescription("the player to add")
+                .setRequired(true)
+            )
+        )
+        .addSubcommand((subcommand) => subcommand
+            .setName(Subcommand.TeamRemove)
+            .setDescription("remove player from a team")
         )
     )
     .addSubcommandGroup((group) => group
@@ -190,9 +205,11 @@ async function execute(interaction: ChatInputCommandInteraction) {
             return;
         }
 
+        await interaction.deferReply({ ephemeral: true });
+
         const actionRow = new ActionRowBuilder<StringSelectMenuBuilder>();
         const selectMenu = new StringSelectMenuBuilder().setCustomId("wallyball-generate").setMaxValues(1)
-        for (let i = 2; i <= queueSize; i++) {
+        for (let i = Math.max(2, queueSize - 25); i <= queueSize; i++) {
             selectMenu.addOptions(
                 new StringSelectMenuOptionBuilder()
                     .setLabel(`${String(i)} Teams`)
@@ -200,8 +217,77 @@ async function execute(interaction: ChatInputCommandInteraction) {
             )
         }
         actionRow.addComponents(selectMenu);
-        await interaction.reply({ components: [ actionRow ], ephemeral: true });
+        await interaction.editReply({ components: [ actionRow ] });
         return;
+    }
+
+    if (subcommand == Subcommand.TeamAdd) {
+        if (!isAdmin) {
+            await interaction.reply({ content: "You don't have permission to use this command.", ephemeral: true });
+            return;
+        }
+        const user = interaction.options.getUser("target", true);
+        const player = await Player.fetch(user.id);
+
+        if (!player) {
+            await interaction.reply({ content: "This user is not a registered player.", ephemeral: true });
+            return;
+        }
+
+        await interaction.deferReply({ ephemeral: true });
+
+        const teams = (await Team.fetchAll()).reverse();
+
+        const actionRow = new ActionRowBuilder<StringSelectMenuBuilder>();
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId(`wallyball-team-add-${user.id}`)
+            .setPlaceholder("Pick a team to add a player to")
+            .setMaxValues(1);
+
+        for (let i = 0; i < teams.length && i < 25; i++) {
+            const team = teams[i];
+            const playerNames = team.players.map(player => player.username).join(", ");
+            selectMenu.addOptions(
+                new StringSelectMenuOptionBuilder()
+                    .setValue(team.name)
+                    .setLabel(`${team.properName}`.slice(0, 25))
+                    .setDescription(playerNames.length < 1 ? "Unknown" : playerNames.slice(0, 50))
+            );
+        }
+
+        actionRow.addComponents(selectMenu);
+        await interaction.editReply({ components: [ actionRow ] });
+    }
+
+    if (subcommand == Subcommand.TeamRemove) {
+        if (!isAdmin) {
+            await interaction.reply({ content: "You don't have permission to use this command.", ephemeral: true });
+            return;
+        }
+
+        await interaction.deferReply({ ephemeral: true });
+
+        const teams = (await Team.fetchAll()).reverse();
+
+        const actionRow = new ActionRowBuilder<StringSelectMenuBuilder>();
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId(`wallyball-team-remove`)
+            .setPlaceholder("Pick a team to remove a player from")
+            .setMaxValues(1);
+
+        for (let i = 0; i < teams.length && i < 25; i++) {
+            const team = teams[i];
+            const playerNames = team.players.map(player => player.username).join(", ");
+            selectMenu.addOptions(
+                new StringSelectMenuOptionBuilder()
+                    .setValue(team.name)
+                    .setLabel(`${team.properName}`.slice(0, 25))
+                    .setDescription(playerNames.length < 1 ? "Unknown" : playerNames.slice(0, 50))
+            );
+        }
+
+        actionRow.addComponents(selectMenu);
+        await interaction.editReply({ components: [ actionRow ] });
     }
 
     if (subcommand == Subcommand.GameRecord) {
@@ -210,10 +296,12 @@ async function execute(interaction: ChatInputCommandInteraction) {
             return;
         }
 
+        await interaction.deferReply({ ephemeral: true });
+
         const teams = (await Team.fetchAll()).reverse();
 
         if (teams.length < 2) {
-            await interaction.reply({ content: "There must be at least two teams to record a game.", ephemeral: true });
+            await interaction.editReply({ content: "There must be at least two teams to record a game." });
             return;
         }
 
@@ -233,7 +321,7 @@ async function execute(interaction: ChatInputCommandInteraction) {
             );
         }
         actionRow.addComponents(selectMenu);
-        await interaction.reply({ components: [ actionRow ], ephemeral: true });
+        await interaction.editReply({ components: [ actionRow ] });
     }
 
     if (subcommand == Subcommand.Leaderboard) {

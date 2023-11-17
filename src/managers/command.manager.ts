@@ -14,13 +14,14 @@ import {SayCommand} from "../commands/say.command";
 import {HelpCommand} from "../commands/help.command";
 import {LeaderboardCommand} from "../commands/leaderboard.command";
 import {MemeCommand} from "../commands/meme.command";
+import {StarboardCommand} from "../commands/starboard.command";
 
 export class CommandManager {
     public static cache = new Collection<CommandName, Command>;
 
     public static async load() {
         const commands = [
-            MenuCommand, SetupCommand, LftCommand, LfpCommand, TestCommand, StatusCommand, WallyballCommand, SayCommand, HelpCommand, LeaderboardCommand, MemeCommand
+            MenuCommand, SetupCommand, LftCommand, LfpCommand, TestCommand, StatusCommand, WallyballCommand, SayCommand, HelpCommand, LeaderboardCommand, MemeCommand, StarboardCommand
         ];
         commands.forEach(command => CommandManager.cache.set(command.name, command));
     }

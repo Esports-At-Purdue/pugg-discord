@@ -101,10 +101,6 @@ export class ServerClient extends Client {
         try {
             await CommandManager.loadServerCommands(this);
             await ServerManager.setStatus(this.server.name);
-            if (this.server.name == ServerName.CSMemers) {
-                const channel = await this.channels.fetch("491443792050913280") as TextChannel;
-                await StarboardManager.load(channel);
-            }
         } catch (error: any) {
             await this.error(error as Error, `Loading Failed\nName: ${this.server.name}`);
             setTimeout(this.load, 5 * 60 * 1000);
@@ -460,6 +456,57 @@ export class ServerClient extends Client {
                             const teamTwo = await PuggApi.fetchTeam(interaction.values[0]) as Team;
                             const modal = new GameRecordModal(teamOne, teamTwo);
                             await interaction.showModal(modal);
+                        }
+                    }
+                    if (args[1] == "team") {
+                        const teamId = interaction.values[0];
+                        const team = await Team.fetch(teamId) as Team;
+                        if (args[2] == "add") {
+                            const targetId = args[3];
+                            const player = await Player.fetch(targetId) as Player;
+
+                            if (team.players.some(player => player.id == targetId)) {
+                                await interaction.reply({ content: "Sorry, this player is already on this team", ephemeral: true });
+                                return;
+                            }
+
+                            team.players.push(player);
+                            await team.save();
+                            await interaction.update({ content: `${player.username} has been added to the ${team.properName}`, components: [  ] });
+                        }
+
+                        if (args[2] == "remove") {
+                            const actionRow = new ActionRowBuilder<StringSelectMenuBuilder>();
+                            const selectMenu = new StringSelectMenuBuilder()
+                                .setCustomId(`wallyball-player-remove-${team.name}`)
+                                .setPlaceholder("Pick a player to remove from this team")
+                                .setMaxValues(1);
+                            for (const player of team.players) {
+                                selectMenu.addOptions(
+                                    new StringSelectMenuOptionBuilder()
+                                        .setValue(player.id)
+                                        .setLabel(`${player.firstName} ${player.lastName.charAt(0)}`)
+                                        .setDescription(player.username)
+                                )
+                            }
+                            actionRow.addComponents(selectMenu);
+                            await interaction.update({ components: [ actionRow ] });
+                        }
+                    }
+                    if (args[1] == "player") {
+                        const playerId = interaction.values[0];
+                        const player = await Player.fetch(playerId) as Player;
+                        if (args[2] == "remove") {
+                            const teamName = args[3];
+                            const team = await Team.fetch(teamName) as Team;
+                            for (let i = 0; i < team.players.length; i++) {
+                                if (team.players[i].id == player.id) {
+                                    team.players.splice(i, 1);
+                                    break;
+                                }
+                            }
+                            await team.save();
+                            await interaction.update({ content: `${player.username} has been removed from the ${team.properName}`, components: [  ] });
                         }
                     }
                     return;
